@@ -131,6 +131,7 @@ main {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 25px;
+    position: relative;
 }
 
 .food-catalog {
@@ -312,15 +313,21 @@ main {
     background-color: #128C7E;
 }
 
+/* --- CONTENEDOR DE LA COLUMNA DERECHA --- */
+.order-sidebar {
+    position: sticky;
+    top: 100px;
+    height: fit-content;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+}
+
 .selected-items {
     background: white;
     border-radius: 15px;
     padding: 20px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     margin-bottom: 20px;
-    position: sticky;
-    top: 100px;
-    height: fit-content;
 }
 
 .selected-list {
@@ -514,8 +521,6 @@ main {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     margin-top: 30px;
     margin-bottom: 40px;
-    position: relative;
-    z-index: 1; 
 }
 
 .form-group {
@@ -771,8 +776,13 @@ footer {
         grid-template-columns: 1fr;
     }
     
-    .selected-items {
+    .order-sidebar {
         position: static;
+        max-height: none;
+        overflow-y: visible;
+    }
+    
+    .selected-items {
         margin-top: 30px;
     }
 }
