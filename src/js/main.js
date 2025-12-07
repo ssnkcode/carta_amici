@@ -268,6 +268,20 @@ function updateOrderSummary() {
     if (subtotalElement) subtotalElement.textContent = `$${subtotal}`;
     if (deliveryElement) deliveryElement.textContent = `$${deliveryCost}`;
     if (totalElement) totalElement.textContent = `$${total}`;
+
+    // Update Floating Button
+    const floatBtn = document.getElementById('floating-cart-btn');
+    const floatCount = document.getElementById('float-count');
+    const floatTotal = document.getElementById('float-total');
+
+    if(selectedItems.length > 0) {
+        const totalQty = selectedItems.reduce((acc, item) => acc + item.quantity, 0);
+        floatCount.textContent = totalQty;
+        floatTotal.textContent = `$${total}`;
+        floatBtn.classList.add('visible');
+    } else {
+        floatBtn.classList.remove('visible');
+    }
 }
 
 function setupEventListeners() {
@@ -330,6 +344,17 @@ function setupEventListeners() {
         modalOverlay.addEventListener('click', function(e) {
             if (e.target === this) {
                 closeClearCartModal();
+            }
+        });
+    }
+
+    // Floating Button Logic
+    const floatingBtn = document.getElementById('floating-cart-btn');
+    if(floatingBtn) {
+        floatingBtn.addEventListener('click', function() {
+            const cartSection = document.getElementById('cart-section');
+            if(cartSection) {
+                cartSection.scrollIntoView({ behavior: 'smooth' });
             }
         });
     }

@@ -10,6 +10,7 @@ body {
     color: #333;
     line-height: 1.6;
     overflow-x: hidden;
+    padding-bottom: 80px;
 }
 
 html {
@@ -317,7 +318,7 @@ main {
     padding: 20px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     margin-bottom: 20px;
-    position: relative;
+    position: sticky;
     top: 100px;
     height: fit-content;
 }
@@ -615,7 +616,7 @@ footer {
     padding: 12px 20px;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1001;
+    z-index: 2001;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -722,6 +723,47 @@ footer {
 
 .modal-btn.confirm:hover {
     background-color: #ff2e43;
+}
+
+/* --- ESTILOS DEL BOTÓN FLOTANTE --- */
+.floating-cart-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: #25D366; /* Verde marca */
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-size: 1rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.floating-cart-btn.visible {
+    transform: translateX(-50%) translateY(0);
+}
+
+.floating-cart-btn:hover {
+    background-color: #128C7E;
+    transform: translateX(-50%) translateY(-3px);
+}
+
+.floating-cart-btn i {
+    font-size: 1.1rem;
+}
+
+.btn-content {
+    display: flex;
+    gap: 5px;
 }
 
 @media (max-width: 992px) {
