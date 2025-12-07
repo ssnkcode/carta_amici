@@ -1,137 +1,46 @@
-
-// Datos del catálogo de alimentos
-const foodItems = [
-    {
-        id: 1,
-        name: "Hamburguesa Clásica",
-        description: "Carne de res, lechuga, tomate, cebolla y queso cheddar",
-        price: 1200,
-        category: "hamburguesas",
-        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: 2,
-        name: "Hamburguesa BBQ",
-        description: "Carne de res, salsa BBQ, aros de cebolla y queso fundido",
-        price: 1400,
-        category: "hamburguesas",
-        image: "https://images.unsplash.com/photo-1565299507177-b0ac66763828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: 3,
-        name: "Pizza Margarita",
-        description: "Salsa de tomate, mozzarella fresca y albahaca",
-        price: 1800,
-        category: "pizzas",
-        image: "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: 4,
-        name: "Pizza Pepperoni",
-        description: "Salsa de tomate, mozzarella y pepperoni",
-        price: 2000,
-        category: "pizzas",
-        image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: 5,
-        name: "Ensalada César",
-        description: "Lechuga romana, pollo a la parrilla, crutones y aderezo césar",
-        price: 1100,
-        category: "ensaladas",
-        image: "https://images.unsplash.com/photo-1546793665-c74683f339c1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: 6,
-        name: "Ensalada Mediterránea",
-        description: "Tomate, pepino, aceitunas, queso feta y aderezo de oliva",
-        price: 1000,
-        category: "ensaladas",
-        image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: 7,
-        name: "Refresco Grande",
-        description: "Coca-Cola, Sprite o Fanta (500ml)",
-        price: 400,
-        category: "bebidas",
-        image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        id: 8,
-        name: "Agua Mineral",
-        description: "Agua sin gas (500ml)",
-        price: 300,
-        category: "bebidas",
-        image: "https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
-    }
-];
-
-// Estado de la aplicación
+let foodItems = [];
 let selectedItems = [];
 let currentCategory = "todos";
 
-// Inicializar la aplicación
 document.addEventListener('DOMContentLoaded', function() {
-    // Cargar datos del localStorage si existen
+    loadProducts();
     loadFromLocalStorage();
-    
-    // Inicializar componentes
-    renderFoodItems();
     setupEventListeners();
     updateOrderSummary();
-    
-    // Inicializar menú hamburguesa
-    initMobileMenu();
 });
 
-// Menú hamburguesa para móviles
-function initMobileMenu() {
-    const menuToggle = document.getElementById('menu-toggle');
-    const navMenu = document.getElementById('nav-menu');
-    const navWhatsappButton = document.getElementById('nav-whatsapp-button');
-    
-    menuToggle.addEventListener('click', function() {
-        navMenu.classList.toggle('active');
-        menuToggle.innerHTML = navMenu.classList.contains('active') 
-            ? '<i class="fas fa-times"></i>' 
-            : '<i class="fas fa-bars"></i>';
-    });
-    
-    // Cerrar menú al hacer clic en un enlace
-    navWhatsappButton.addEventListener('click', function() {
-        navMenu.classList.remove('active');
-        menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
-    });
-    
-    // Cerrar menú al hacer clic fuera
-    document.addEventListener('click', function(event) {
-        if (!navMenu.contains(event.target) && !menuToggle.contains(event.target)) {
-            navMenu.classList.remove('active');
-            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
-        }
-    });
-    
-    // Cerrar menú en pantallas grandes
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            navMenu.classList.remove('active');
-            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
-        }
-    });
+async function loadProducts() {
+    try {
+        const response = await fetch('./src/products/products.json');
+        const data = await response.json();
+        
+        foodItems = data.productos.map((item, index) => ({
+            id: index + 1,
+            name: item.titulo,
+            description: item.descripcion || "",
+            price: item.precio,
+            category: item.category.toLowerCase(),
+            image: item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80"
+        }));
+
+        renderFoodItems();
+        
+    } catch (error) {
+        console.error("Error cargando productos:", error);
+        const foodGrid = document.getElementById('food-grid');
+        foodGrid.innerHTML = '<p class="error-msg">Error al cargar el menú. Por favor intenta más tarde.</p>';
+    }
 }
 
-// Guardar en localStorage
 function saveToLocalStorage() {
     try {
         localStorage.setItem('deliciasExpress_selectedItems', JSON.stringify(selectedItems));
         localStorage.setItem('deliciasExpress_currentCategory', currentCategory);
     } catch (e) {
-        console.warn('No se pudo guardar en localStorage:', e);
+        console.warn(e);
     }
 }
 
-// Cargar desde localStorage
 function loadFromLocalStorage() {
     try {
         const savedItems = localStorage.getItem('deliciasExpress_selectedItems');
@@ -139,11 +48,11 @@ function loadFromLocalStorage() {
         
         if (savedItems) {
             selectedItems = JSON.parse(savedItems);
+            renderSelectedItems();
         }
         
         if (savedCategory) {
             currentCategory = savedCategory;
-            // Activar la pestaña correspondiente
             document.querySelectorAll('.category-tab').forEach(tab => {
                 if (tab.dataset.category === currentCategory) {
                     tab.classList.add('active');
@@ -153,27 +62,23 @@ function loadFromLocalStorage() {
             });
         }
     } catch (e) {
-        console.warn('No se pudo cargar desde localStorage:', e);
+        console.warn(e);
     }
 }
 
-// Renderizar los elementos del catálogo
 function renderFoodItems() {
     const foodGrid = document.getElementById('food-grid');
     foodGrid.innerHTML = '';
     
-    // Filtrar elementos por categoría
     const filteredItems = currentCategory === "todos" 
         ? foodItems 
         : foodItems.filter(item => item.category === currentCategory);
     
-    // Crear elementos HTML para cada comida
     filteredItems.forEach(item => {
-        const isSelected = selectedItems.some(selected => selected.id === item.id);
-        const selectedItem = selectedItems.find(selected => selected.id === item.id);
+        const inCart = selectedItems.find(selected => selected.id === item.id);
         
         const foodItem = document.createElement('div');
-        foodItem.className = `food-item ${isSelected ? 'selected' : ''}`;
+        foodItem.className = `food-item ${inCart ? 'in-cart' : ''}`;
         foodItem.dataset.id = item.id;
         
         foodItem.innerHTML = `
@@ -183,8 +88,15 @@ function renderFoodItems() {
                 <p class="food-description">${item.description}</p>
                 <div class="food-footer">
                     <div class="food-price">$${item.price}</div>
-                    <button class="select-btn ${isSelected ? 'selected' : ''}" data-id="${item.id}">
-                        ${isSelected ? '✓ ' + selectedItem.quantity + ' seleccionado(s)' : 'Seleccionar'}
+                </div>
+                <div class="card-actions">
+                    <div class="quantity-selector">
+                        <button class="qty-btn minus" onclick="decreaseCardQty(${item.id})">-</button>
+                        <input type="number" id="qty-${item.id}" value="1" min="1" max="99" class="qty-input-card" readonly>
+                        <button class="qty-btn plus" onclick="increaseCardQty(${item.id})">+</button>
+                    </div>
+                    <button class="add-btn" onclick="addToCart(${item.id})">
+                        Agregar
                     </button>
                 </div>
             </div>
@@ -192,128 +104,120 @@ function renderFoodItems() {
         
         foodGrid.appendChild(foodItem);
     });
-    
-    // Agregar event listeners a los botones de selección
-    document.querySelectorAll('.select-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const id = parseInt(this.dataset.id);
-            toggleFoodItem(id);
-        });
-    });
 }
 
-// Alternar selección de un elemento de comida
-function toggleFoodItem(id) {
-    const foodItem = foodItems.find(item => item.id === id);
-    const existingIndex = selectedItems.findIndex(item => item.id === id);
+function increaseCardQty(id) {
+    const input = document.getElementById(`qty-${id}`);
+    let value = parseInt(input.value);
+    if (value < 99) input.value = value + 1;
+}
+
+function decreaseCardQty(id) {
+    const input = document.getElementById(`qty-${id}`);
+    let value = parseInt(input.value);
+    if (value > 1) input.value = value - 1;
+}
+
+function addToCart(id) {
+    const quantityInput = document.getElementById(`qty-${id}`);
+    const quantityToAdd = parseInt(quantityInput.value);
     
-    if (existingIndex >= 0) {
-        // Si ya está seleccionado, quitarlo
-        selectedItems.splice(existingIndex, 1);
-        showNotification(`${foodItem.name} eliminado del pedido`, 'success');
+    const foodItem = foodItems.find(item => item.id === id);
+    const existingItemIndex = selectedItems.findIndex(item => item.id === id);
+    
+    if (existingItemIndex >= 0) {
+        selectedItems[existingItemIndex].quantity += quantityToAdd;
+        showNotification(`Se agregaron ${quantityToAdd} más de ${foodItem.name}`, 'success');
     } else {
-        // Si no está seleccionado, añadirlo
         selectedItems.push({
             ...foodItem,
-            quantity: 1
+            quantity: quantityToAdd
         });
-        showNotification(`${foodItem.name} añadido al pedido`, 'success');
+        showNotification(`${foodItem.name} agregado al carrito`, 'success');
     }
     
-    // Actualizar la interfaz
+    quantityInput.value = 1;
+    
     renderFoodItems();
     renderSelectedItems();
     updateOrderSummary();
     saveToLocalStorage();
 }
 
-// Renderizar la lista de elementos seleccionados
 function renderSelectedItems() {
     const selectedList = document.getElementById('selected-list');
-    const emptyCart = document.getElementById('empty-cart');
     
-    if (!selectedList || !emptyCart) {
-        console.error('Elementos del DOM no encontrados');
-        return;
-    }
+    if (!selectedList) return;
     
     if (selectedItems.length === 0) {
-        emptyCart.style.display = 'block';
-        selectedList.innerHTML = '';
+        selectedList.innerHTML = `
+            <div class="empty-cart" id="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Tu carrito está vacío</p>
+                <p>Selecciona productos del catálogo</p>
+            </div>
+        `;
         return;
     }
-    
-    emptyCart.style.display = 'none';
     
     let itemsHTML = '';
     
     selectedItems.forEach((item, index) => {
         itemsHTML += `
             <div class="selected-item">
-                <div class="item-name">${item.name}</div>
-                <div class="item-controls">
-                    <input type="number" min="1" max="99" value="${item.quantity}" class="item-qty" data-index="${index}">
-                    <button class="remove-item" data-index="${index}" aria-label="Eliminar ${item.name}">
-                        <i class="fas fa-trash"></i>
+                <div class="item-info">
+                    <span class="item-name">${item.name}</span>
+                    <span class="item-unit-price">($${item.price} c/u)</span>
+                </div>
+                
+                <div class="item-actions">
+                    <div class="cart-qty-selector">
+                        <button class="cart-qty-btn" onclick="updateCartItemQuantity(${index}, -1)">-</button>
+                        <input type="text" value="${item.quantity}" class="cart-qty-input" readonly>
+                        <button class="cart-qty-btn" onclick="updateCartItemQuantity(${index}, 1)">+</button>
+                    </div>
+                    <div class="item-price">$${item.price * item.quantity}</div>
+                    <button class="remove-item-btn" onclick="removeSelectedItem(${index})" aria-label="Eliminar">
+                        <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
-                <div class="item-price">$${item.price * item.quantity}</div>
             </div>
         `;
     });
+
+    itemsHTML += `
+        <div class="cart-footer-actions">
+            <button onclick="openClearCartModal()" class="clear-cart-btn">
+                <i class="fas fa-trash"></i> Vaciar Carrito
+            </button>
+        </div>
+    `;
     
     selectedList.innerHTML = itemsHTML;
-    
-    // Agregar event listeners a los controles de cantidad
-    document.querySelectorAll('.item-qty').forEach(input => {
-        input.addEventListener('change', function() {
-            const index = parseInt(this.dataset.index);
-            const newQuantity = parseInt(this.value);
-            
-            if (newQuantity > 99) {
-                this.value = 99;
-                updateQuantity(index, 99);
-            } else if (newQuantity < 1) {
-                this.value = 1;
-                updateQuantity(index, 1);
-            } else {
-                updateQuantity(index, newQuantity);
-            }
-        });
-        
-        input.addEventListener('input', function() {
-            const value = this.value.replace(/[^0-9]/g, '');
-            this.value = value;
-        });
-    });
-    
-    // Agregar event listeners a los botones de eliminación
-    document.querySelectorAll('.remove-item').forEach(button => {
-        button.addEventListener('click', function() {
-            const index = parseInt(this.dataset.index);
-            removeSelectedItem(index);
-        });
-    });
 }
 
-// Actualizar la cantidad de un elemento seleccionado
-function updateQuantity(index, quantity) {
-    if (quantity < 1 || quantity > 99) return;
-    
-    selectedItems[index].quantity = quantity;
-    showNotification(`${selectedItems[index].name} actualizado: ${quantity} unidad(es)`, 'success');
+function updateCartItemQuantity(index, change) {
+    const item = selectedItems[index];
+    const newQuantity = item.quantity + change;
+
+    if (newQuantity < 1) {
+        removeSelectedItem(index);
+        return;
+    }
+
+    if (newQuantity > 99) return;
+
+    item.quantity = newQuantity;
     
     renderSelectedItems();
-    renderFoodItems();
     updateOrderSummary();
     saveToLocalStorage();
 }
 
-// Eliminar un elemento seleccionado
 function removeSelectedItem(index) {
     const removedItem = selectedItems[index];
     selectedItems.splice(index, 1);
-    showNotification(`${removedItem.name} eliminado del pedido`, 'success');
+    showNotification(`${removedItem.name} eliminado`, 'success');
     
     renderSelectedItems();
     renderFoodItems();
@@ -321,14 +225,33 @@ function removeSelectedItem(index) {
     saveToLocalStorage();
 }
 
-// Actualizar el resumen del pedido
+function openClearCartModal() {
+    document.getElementById('confirmation-modal').classList.add('active');
+}
+
+function closeClearCartModal() {
+    document.getElementById('confirmation-modal').classList.remove('active');
+}
+
+function confirmClearCart() {
+    selectedItems = [];
+    renderSelectedItems();
+    renderFoodItems();
+    updateOrderSummary();
+    saveToLocalStorage();
+    closeClearCartModal();
+    showNotification('Carrito vaciado correctamente', 'success');
+    
+    document.querySelectorAll('.extra-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+}
+
 function updateOrderSummary() {
-    // Calcular subtotal de alimentos
     const foodSubtotal = selectedItems.reduce((total, item) => {
         return total + (item.price * item.quantity);
     }, 0);
     
-    // Calcular subtotal de adicionales
     const extraSubtotal = Array.from(document.querySelectorAll('.extra-checkbox:checked'))
         .reduce((total, checkbox) => {
             return total + parseInt(checkbox.dataset.price || 0);
@@ -338,7 +261,6 @@ function updateOrderSummary() {
     const deliveryCost = 300;
     const total = subtotal + deliveryCost;
     
-    // Actualizar la interfaz
     const subtotalElement = document.getElementById('subtotal');
     const deliveryElement = document.getElementById('delivery-cost');
     const totalElement = document.getElementById('total-cost');
@@ -348,23 +270,18 @@ function updateOrderSummary() {
     if (totalElement) totalElement.textContent = `$${total}`;
 }
 
-// Configurar event listeners
 function setupEventListeners() {
-    // Filtros de categoría
     document.querySelectorAll('.category-tab').forEach(tab => {
         tab.addEventListener('click', function() {
-            // Actualizar pestaña activa
             document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
             this.classList.add('active');
             
-            // Actualizar categoría y renderizar
             currentCategory = this.dataset.category;
             renderFoodItems();
             saveToLocalStorage();
         });
     });
     
-    // Checkboxes de adicionales
     document.querySelectorAll('.extra-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             updateOrderSummary();
@@ -376,7 +293,6 @@ function setupEventListeners() {
         });
     });
     
-    // Formulario de pedido
     const orderForm = document.getElementById('order-form');
     if (orderForm) {
         orderForm.addEventListener('submit', function(e) {
@@ -385,7 +301,6 @@ function setupEventListeners() {
         });
     }
     
-    // Validar campos del formulario
     const phoneInput = document.getElementById('customer-phone');
     if (phoneInput) {
         phoneInput.addEventListener('input', function() {
@@ -393,18 +308,34 @@ function setupEventListeners() {
         });
     }
     
-    // Cerrar notificación al hacer clic
     const notification = document.getElementById('notification');
     if (notification) {
         notification.addEventListener('click', function() {
             this.classList.remove('show');
         });
     }
+
+    const modalCancelBtn = document.getElementById('modal-cancel');
+    if (modalCancelBtn) {
+        modalCancelBtn.addEventListener('click', closeClearCartModal);
+    }
+
+    const modalConfirmBtn = document.getElementById('modal-confirm');
+    if (modalConfirmBtn) {
+        modalConfirmBtn.addEventListener('click', confirmClearCart);
+    }
+    
+    const modalOverlay = document.getElementById('confirmation-modal');
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeClearCartModal();
+            }
+        });
+    }
 }
 
-// Enviar pedido por WhatsApp
 function sendOrderViaWhatsApp() {
-    // Obtener datos del formulario
     const nameInput = document.getElementById('customer-name');
     const phoneInput = document.getElementById('customer-phone');
     const addressInput = document.getElementById('customer-address');
@@ -420,7 +351,6 @@ function sendOrderViaWhatsApp() {
     const address = addressInput.value.trim();
     const notes = notesInput ? notesInput.value.trim() : '';
     
-    // Validaciones
     if (!name) {
         showNotification('Por favor, ingresa tu nombre', 'error');
         nameInput.focus();
@@ -439,39 +369,33 @@ function sendOrderViaWhatsApp() {
         return;
     }
     
-    // Validar que hay productos seleccionados
     if (selectedItems.length === 0) {
         showNotification('Por favor, selecciona al menos un producto', 'error');
         return;
     }
     
-    // Obtener adicionales seleccionados
     const selectedExtras = Array.from(document.querySelectorAll('.extra-checkbox:checked'))
         .map(checkbox => ({
             name: checkbox.dataset.name || 'Adicional',
             price: parseInt(checkbox.dataset.price || 0)
         }));
     
-    // Calcular totales
     const foodSubtotal = selectedItems.reduce((total, item) => total + (item.price * item.quantity), 0);
     const extraSubtotal = selectedExtras.reduce((total, extra) => total + extra.price, 0);
     const subtotal = foodSubtotal + extraSubtotal;
     const deliveryCost = 300;
     const total = subtotal + deliveryCost;
     
-    // Construir mensaje para WhatsApp
     let message = `*NUEVO PEDIDO - Delicias Express*%0A%0A`;
     message += `*Cliente:* ${name}%0A`;
     message += `*Teléfono:* ${phone}%0A`;
     message += `*Dirección:* ${address}%0A`;
     message += `%0A*PEDIDO:*%0A`;
     
-    // Añadir productos
     selectedItems.forEach(item => {
         message += `➡ ${item.name} x${item.quantity} - $${item.price * item.quantity}%0A`;
     });
     
-    // Añadir adicionales
     if (selectedExtras.length > 0) {
         message += `%0A*Adicionales:*%0A`;
         selectedExtras.forEach(extra => {
@@ -479,45 +403,36 @@ function sendOrderViaWhatsApp() {
         });
     }
     
-    // Añadir notas
     if (notes !== '') {
         message += `%0A*Notas adicionales:*%0A${notes}%0A`;
     }
     
-    // Añadir resumen de pago
     message += `%0A*RESUMEN DE PAGO:*%0A`;
     message += `Subtotal: $${subtotal}%0A`;
     message += `Costo de envío: $${deliveryCost}%0A`;
     message += `*TOTAL: $${total}*%0A%0A`;
     message += `*¡Gracias por tu pedido!*`;
     
-    // NÚMERO DE WHATSAPP ACTUALIZADO - ¡ESTE ES EL NÚMERO QUE RECIBIRÁ LOS PEDIDOS!
-    const phoneNumber = "5493541682310"; // <<< ¡TU NÚMERO AQUÍ!
+    const phoneNumber = "5493541682310"; 
     
-    // Crear enlace de WhatsApp
     const whatsappURL = `https://wa.me/${phoneNumber}?text=${message}`;
     
-    // Abrir WhatsApp en una nueva pestaña
     const newWindow = window.open(whatsappURL, '_blank');
     
     if (newWindow) {
-        // Mostrar confirmación
         showNotification('Pedido enviado por WhatsApp ✓', 'success');
         
-        // Resetear el formulario después de 2 segundos
         setTimeout(() => {
             if (document.getElementById('order-form')) {
                 document.getElementById('order-form').reset();
             }
             
-            // Limpiar carrito (opcional - comentar si no quieres que se limpie)
             selectedItems = [];
             renderFoodItems();
             renderSelectedItems();
             updateOrderSummary();
             saveToLocalStorage();
             
-            // Desmarcar checkboxes de adicionales
             document.querySelectorAll('.extra-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
             });
@@ -529,7 +444,6 @@ function sendOrderViaWhatsApp() {
     }
 }
 
-// Mostrar notificación
 function showNotification(text, type = 'success') {
     const notification = document.getElementById('notification');
     const notificationText = document.getElementById('notification-text');
@@ -538,24 +452,18 @@ function showNotification(text, type = 'success') {
     
     notificationText.textContent = text;
     
-    // Cambiar color según tipo
     notification.className = 'notification';
     notification.classList.add(type === 'error' ? 'error' : 'show');
-    
-    // Mostrar notificación
     notification.classList.add('show');
     
-    // Ocultar después de 3 segundos (5 para errores)
     const hideTime = type === 'error' ? 5000 : 3000;
     setTimeout(() => {
         notification.classList.remove('show');
     }, hideTime);
 }
 
-// Mejorar experiencia táctil en móviles
 document.addEventListener('touchstart', function() {}, {passive: true});
 
-// Prevenir zoom en inputs en iOS
 document.addEventListener('touchmove', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
         e.preventDefault();

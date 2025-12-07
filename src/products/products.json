@@ -1,0 +1,83 @@
+{
+    "productos": [
+
+      { "titulo": "Muzza", "descripcion": "", "precio": 8000, "image": "", "category": "Pizza" },
+      { "titulo": "2 x Muzza", "descripcion": "", "precio": 14000, "image": "", "category": "Pizza" },
+      { "titulo": "Especial", "descripcion": "", "precio": 9000, "image": "", "category": "Pizza" },
+      { "titulo": "Huevo", "descripcion": "", "precio": 9000, "image": "", "category": "Pizza" },
+      { "titulo": "Provenzal", "descripcion": "", "precio": 9000, "image": "", "category": "Pizza" },
+      { "titulo": "Roquefort", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "Fugazzeta", "descripcion": "", "precio": 9000, "image": "", "category": "Pizza" },
+      { "titulo": "4 Quesos", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "S/Especial", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "Capresse", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "Completa", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "Calabresa", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "Champiñón", "descripcion": "", "precio": 11000, "image": "", "category": "Pizza" },
+      { "titulo": "Rucula", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "Anchoa", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "Choclo", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "Napolitana", "descripcion": "", "precio": 10000, "image": "", "category": "Pizza" },
+      { "titulo": "Amici", "descripcion": "", "precio": 12000, "image": "", "category": "Pizza" },
+  
+
+      {
+        "titulo": "Hamburguesa Abusa",
+        "descripcion": "Medallón de carne, Cebolla soasada, Cheddar, Balcon.",
+        "precio": 10000,
+        "image": "",
+        "category": "Hamburguesa"
+      },
+      {
+        "titulo": "Hamburguesa Clásica",
+        "descripcion": "Medallón de carne, Cebolla morada, Cheddar, Queso Barra.",
+        "precio": 10000,
+        "image": "",
+        "category": "Hamburguesa"
+      },
+      {
+        "titulo": "Hamburguesa Doble Tóxica",
+        "descripcion": "Dos medallones de carne, Cheddar.",
+        "precio": 10000,
+        "image": "",
+        "category": "Hamburguesa"
+      },
+      {
+        "titulo": "Hamburguesa Zarpada",
+        "descripcion": "Medallón de carne, Lechuga, Tomate, Huevo, Queso Barra.",
+        "precio": 10000,
+        "image": "",
+        "category": "Hamburguesa"
+      },
+      { "titulo": "Hamburguesa", "descripcion": "", "precio": 10000, "image": "", "category": "Hamburguesa" },
+      { "titulo": "2 x Hamburguesa", "descripcion": "", "precio": 18000, "image": "", "category": "Hamburguesa" },
+      { "titulo": "Lomito Completo", "descripcion": "", "precio": 15000, "image": "", "category": "Sandwich" },
+      { "titulo": "Sand. Milanesa Simple", "descripcion": "", "precio": 10000, "image": "", "category": "Sandwich" },
+      { "titulo": "Sand. Milanesa Completa", "descripcion": "", "precio": 12000, "image": "", "category": "Sandwich" },
+      { "titulo": "2 x Sand. Milanesa Completa", "descripcion": "", "precio": 20000, "image": "", "category": "Sandwich" },
+      { "titulo": "Hamburlomo Simple", "descripcion": "", "precio": 14000, "image": "", "category": "Sandwich" },
+      { "titulo": "Hamburlomo Doble", "descripcion": "", "precio": 18000, "image": "", "category": "Sandwich" },
+      { "titulo": "Lomazo", "descripcion": "", "precio": 10000, "image": "", "category": "Sandwich" },
+      { "titulo": "2 x Lomazo", "descripcion": "", "precio": 18000, "image": "", "category": "Sandwich" },
+      { "titulo": "1/2 Lomopizza", "descripcion": "", "precio": 18000, "image": "", "category": "Sandwich" },
+      { "titulo": "Lomopizza", "descripcion": "", "precio": 30000, "image": "", "category": "Sandwich" },
+  
+
+      { "titulo": "Saladas", "descripcion": "", "precio": 11000, "image": "", "category": "Empanadas" },
+      { "titulo": "Dulces", "descripcion": "", "precio": 11000, "image": "", "category": "Empanadas" },
+      { "titulo": "Jamón y Queso", "descripcion": "", "precio": 12000, "image": "", "category": "Empanadas" },
+      { "titulo": "P. Cuchillo", "descripcion": "", "precio": 12000, "image": "", "category": "Empanadas" },
+      { "titulo": "Pollo", "descripcion": "", "precio": 10000, "image": "", "category": "Empanadas" },
+      { "titulo": "Árabes", "descripcion": "", "precio": 12000, "image": "", "category": "Empanadas" },
+      { "titulo": "Fritas (Saladas)", "descripcion": "", "precio": 9000, "image": "", "category": "Empanadas" },
+      { "titulo": "2 x Fritas (Saladas)", "descripcion": "", "precio": 17000, "image": "", "category": "Empanadas" },
+      { "titulo": "1/2 Docena", "descripcion": "", "precio": 6000, "image": "", "category": "Empanadas" },
+      { "titulo": "Unidad", "descripcion": "", "precio": 1200, "image": "", "category": "Empanadas" },
+  
+
+      { "titulo": "Papas Sola", "descripcion": "", "precio": 4500, "image": "", "category": "Papas" },
+      { "titulo": "Papas Cheddar", "descripcion": "", "precio": 5500, "image": "", "category": "Papas" },
+      { "titulo": "Papas Cheddar y Bacon", "descripcion": "", "precio": 6000, "image": "", "category": "Papas" }
+    ]
+  }
+  
