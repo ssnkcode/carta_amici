@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delicias Express - Pedidos por WhatsApp</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-utensils"></i>
+                    <div>
+                        <h1>Delicias Express</h1>
+                        <div class="tagline">Pedidos rápidos por WhatsApp</div>
+                    </div>
+                </div>
+                <a href="#whatsapp-form" class="whatsapp-button">
+                    <i class="fab fa-whatsapp"></i> Realizar Pedido
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="food-catalog">
+            <div class="section-title">
+                <h2>Nuestro Catálogo</h2>
+            </div>
+            
+            <div class="category-tabs">
+                <button class="category-tab active" data-category="todos">Todos</button>
+                <button class="category-tab" data-category="hamburguesas">Hamburguesas</button>
+                <button class="category-tab" data-category="pizzas">Pizzas</button>
+                <button class="category-tab" data-category="ensaladas">Ensaladas</button>
+                <button class="category-tab" data-category="bebidas">Bebidas</button>
+            </div>
+            
+            <div class="food-grid" id="food-grid">
+                <!-- Los elementos de comida se generarán con JavaScript -->
+            </div>
+        </section>
+        
+        <aside class="selected-items">
+            <div class="section-title">
+                <h2>Tu Pedido</h2>
+            </div>
+            
+            <div class="selected-list" id="selected-list">
+                <div class="empty-cart" id="empty-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>Tu carrito está vacío</p>
+                    <p>Selecciona productos del catálogo</p>
+                </div>
+                <!-- Los elementos seleccionados se añadirán aquí -->
+            </div>
+            
+            <div class="extras-section">
+                <h3 class="extras-title">Adicionales</h3>
+                <div class="extra-option">
+                    <label class="extra-label">
+                        <input type="checkbox" class="extra-checkbox" id="extra-utensils" data-name="Cubiertos descartables" data-price="50">
+                        Cubiertos descartables
+                    </label>
+                    <span class="food-price">$50</span>
+                </div>
+                <div class="extra-option">
+                    <label class="extra-label">
+                        <input type="checkbox" class="extra-checkbox" id="extra-sauce" data-name="Salsas adicionales" data-price="100">
+                        Salsas adicionales
+                    </label>
+                    <span class="food-price">$100</span>
+                </div>
+                <div class="extra-option">
+                    <label class="extra-label">
+                        <input type="checkbox" class="extra-checkbox" id="extra-napkins" data-name="Servilletas extra" data-price="30">
+                        Servilletas extra
+                    </label>
+                    <span class="food-price">$30</span>
+                </div>
+            </div>
+            
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span id="subtotal">$0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Envío:</span>
+                    <span id="delivery-cost">$300</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Total:</span>
+                    <span id="total-cost">$300</span>
+                </div>
+            </div>
+        </aside>
+        
+        <section class="whatsapp-form" id="whatsapp-form">
+            <div class="section-title">
+                <h2>Completar Pedido</h2>
+            </div>
+            
+            <form id="order-form">
+                <div class="form-group">
+                    <label class="form-label" for="customer-name">Nombre completo *</label>
+                    <input type="text" id="customer-name" class="form-input" placeholder="Ingresa tu nombre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="customer-phone">Número de WhatsApp *</label>
+                    <input type="tel" id="customer-phone" class="form-input" placeholder="Ej: 1122334455" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="customer-address">Dirección de entrega *</label>
+                    <input type="text" id="customer-address" class="form-input" placeholder="Calle, número, barrio" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="order-notes">Notas adicionales (opcional)</label>
+                    <textarea id="order-notes" class="form-input" placeholder="Indicaciones especiales, alergias, etc." rows="3"></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fab fa-whatsapp"></i> Enviar pedido por WhatsApp
+                </button>
+            </form>
+        </section>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo">
+                    <i class="fas fa-utensils"></i>
+                    <div>
+                        <h1>Delicias Express</h1>
+                        <div class="tagline">Comida rápida de calidad</div>
+                    </div>
+                </div>
+                <div>
+                    <p>© 2025 Delicias Express. Todos los derechos reservados.</p>
+                    <p>Envíos a domicilio por WhatsApp</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notification-text">Producto añadido al carrito</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
