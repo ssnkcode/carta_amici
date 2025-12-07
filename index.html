@@ -6,12 +6,16 @@
     <title>Delicias Express - Pedidos por WhatsApp</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <header>
         <div class="container">
             <div class="header-content">
+                <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
                 <div class="logo">
                     <i class="fas fa-utensils"></i>
                     <div>
@@ -19,9 +23,12 @@
                         <div class="tagline">Pedidos rápidos por WhatsApp</div>
                     </div>
                 </div>
-                <a href="#whatsapp-form" class="whatsapp-button">
-                    <i class="fab fa-whatsapp"></i> Realizar Pedido
-                </a>
+                
+                <nav class="nav-menu" id="nav-menu">
+                    <a href="#whatsapp-form" class="whatsapp-button" id="nav-whatsapp-button">
+                        <i class="fab fa-whatsapp"></i> Realizar Pedido
+                    </a>
+                </nav>
             </div>
         </div>
     </header>
@@ -155,7 +162,6 @@
         <i class="fas fa-check-circle"></i>
         <span id="notification-text">Producto añadido al carrito</span>
     </div>
-
-    <script src="script.js"></script>
+    <script src="js/script.js"></script>
 </body>
 </html>
