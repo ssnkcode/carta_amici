@@ -1,3 +1,4 @@
+// main.js - Funciones principales del sistema
 let foodItems = [];
 let selectedItems = [];
 let currentCategory = "todos";
@@ -81,6 +82,9 @@ function renderFoodItems() {
         foodItem.className = `food-item ${inCart ? 'in-cart' : ''}`;
         foodItem.dataset.id = item.id;
         
+        // Generar HTML para controles de extras
+        const extrasHTML = generateExtrasHTML(item);
+        
         foodItem.innerHTML = `
             <div class="food-img" style="background-image: url('${item.image}')"></div>
             <div class="food-content">
@@ -89,6 +93,9 @@ function renderFoodItems() {
                 <div class="food-footer">
                     <div class="food-price">$${item.price}</div>
                 </div>
+                
+                ${extrasHTML}
+                
                 <div class="card-actions">
                     <div class="quantity-selector">
                         <button class="qty-btn minus" onclick="decreaseCardQty(${item.id})">-</button>
@@ -103,6 +110,11 @@ function renderFoodItems() {
         `;
         
         foodGrid.appendChild(foodItem);
+        
+        // Agregar event listeners para los nuevos controles
+        setTimeout(() => {
+            setupExtrasEventListeners(item.id);
+        }, 100);
     });
 }
 
@@ -116,32 +128,6 @@ function decreaseCardQty(id) {
     const input = document.getElementById(`qty-${id}`);
     let value = parseInt(input.value);
     if (value > 1) input.value = value - 1;
-}
-
-function addToCart(id) {
-    const quantityInput = document.getElementById(`qty-${id}`);
-    const quantityToAdd = parseInt(quantityInput.value);
-    
-    const foodItem = foodItems.find(item => item.id === id);
-    const existingItemIndex = selectedItems.findIndex(item => item.id === id);
-    
-    if (existingItemIndex >= 0) {
-        selectedItems[existingItemIndex].quantity += quantityToAdd;
-        showNotification(`Se agregaron ${quantityToAdd} más de ${foodItem.name}`, 'success');
-    } else {
-        selectedItems.push({
-            ...foodItem,
-            quantity: quantityToAdd
-        });
-        showNotification(`${foodItem.name} agregado al carrito`, 'success');
-    }
-    
-    quantityInput.value = 1;
-    
-    renderFoodItems();
-    renderSelectedItems();
-    updateOrderSummary();
-    saveToLocalStorage();
 }
 
 function renderSelectedItems() {
@@ -163,6 +149,11 @@ function renderSelectedItems() {
     let itemsHTML = '';
     
     selectedItems.forEach((item, index) => {
+        // Calcular subtotal de extras
+        const saucesTotal = item.sauces ? item.sauces.reduce((sum, sauce) => sum + sauce.price, 0) : 0;
+        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) : 0;
+        const extrasTotal = saucesTotal + generalExtrasTotal;
+        
         itemsHTML += `
             <div class="selected-item">
                 <div class="item-info">
@@ -170,13 +161,39 @@ function renderSelectedItems() {
                     <span class="item-unit-price">($${item.price} c/u)</span>
                 </div>
                 
+                ${item.notes ? `<div class="cart-product-notes">📝 ${item.notes}</div>` : ''}
+                
+                ${(item.sauces && item.sauces.length > 0 || item.generalExtras && item.generalExtras.length > 0) ? `
+                    <div class="cart-extras">
+                        <div class="cart-extras-title">Adicionales:</div>
+                        ${item.sauces && item.sauces.length > 0 ? item.sauces.map(sauce => `
+                            <div class="cart-extra-item">
+                                <span class="cart-extra-name">
+                                    <i class="fas fa-wine-bottle"></i> ${sauce.name}
+                                </span>
+                                <span class="cart-extra-price">+$${sauce.price}</span>
+                            </div>
+                        `).join('') : ''}
+                        
+                        ${item.generalExtras && item.generalExtras.length > 0 ? item.generalExtras.map(extra => `
+                            <div class="cart-extra-item">
+                                <span class="cart-extra-name">
+                                    <i class="fas fa-plus-circle"></i> ${extra.name}
+                                    <span class="cart-extra-quantity">x${extra.quantity}</span>
+                                </span>
+                                <span class="cart-extra-price">+$${extra.price * extra.quantity}</span>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                ` : ''}
+                
                 <div class="item-actions">
                     <div class="cart-qty-selector">
                         <button class="cart-qty-btn" onclick="updateCartItemQuantity(${index}, -1)">-</button>
                         <input type="text" value="${item.quantity}" class="cart-qty-input" readonly>
                         <button class="cart-qty-btn" onclick="updateCartItemQuantity(${index}, 1)">+</button>
                     </div>
-                    <div class="item-price">$${item.price * item.quantity}</div>
+                    <div class="item-price">$${(item.price * item.quantity) + extrasTotal}</div>
                     <button class="remove-item-btn" onclick="removeSelectedItem(${index})" aria-label="Eliminar">
                         <i class="fas fa-trash-alt"></i>
                     </button>
@@ -248,16 +265,21 @@ function confirmClearCart() {
 }
 
 function updateOrderSummary() {
+    // Calcular subtotal de productos con sus extras
     const foodSubtotal = selectedItems.reduce((total, item) => {
-        return total + (item.price * item.quantity);
+        const saucesTotal = item.sauces ? item.sauces.reduce((sum, sauce) => sum + sauce.price, 0) : 0;
+        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) : 0;
+        const itemTotal = (item.price * item.quantity) + saucesTotal + generalExtrasTotal;
+        return total + itemTotal;
     }, 0);
     
-    const extraSubtotal = Array.from(document.querySelectorAll('.extra-checkbox:checked'))
+    // Calcular subtotal de extras globales (los que ya estaban)
+    const globalExtrasSubtotal = Array.from(document.querySelectorAll('.extra-checkbox:checked'))
         .reduce((total, checkbox) => {
             return total + parseInt(checkbox.dataset.price || 0);
         }, 0);
     
-    const subtotal = foodSubtotal + extraSubtotal;
+    const subtotal = foodSubtotal + globalExtrasSubtotal;
     const deliveryCost = 300;
     const total = subtotal + deliveryCost;
     
@@ -405,24 +427,55 @@ function sendOrderViaWhatsApp() {
             price: parseInt(checkbox.dataset.price || 0)
         }));
     
-    const foodSubtotal = selectedItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    // Calcular subtotal incluyendo extras de productos
+    const foodSubtotal = selectedItems.reduce((total, item) => {
+        const saucesTotal = item.sauces ? item.sauces.reduce((sum, sauce) => sum + sauce.price, 0) : 0;
+        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) : 0;
+        const itemTotal = (item.price * item.quantity) + saucesTotal + generalExtrasTotal;
+        return total + itemTotal;
+    }, 0);
+    
     const extraSubtotal = selectedExtras.reduce((total, extra) => total + extra.price, 0);
     const subtotal = foodSubtotal + extraSubtotal;
     const deliveryCost = 300;
     const total = subtotal + deliveryCost;
     
-    let message = `*NUEVO PEDIDO - Delicias Express*%0A%0A`;
+    let message = `*NUEVO PEDIDO - Comidas AMICI*%0A%0A`;
     message += `*Cliente:* ${name}%0A`;
     message += `*Teléfono:* ${phone}%0A`;
     message += `*Dirección:* ${address}%0A`;
     message += `%0A*PEDIDO:*%0A`;
     
     selectedItems.forEach(item => {
-        message += `➡ ${item.name} x${item.quantity} - $${item.price * item.quantity}%0A`;
+        // Calcular total del item con extras
+        const saucesTotal = item.sauces ? item.sauces.reduce((sum, sauce) => sum + sauce.price, 0) : 0;
+        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) : 0;
+        const itemTotal = (item.price * item.quantity) + saucesTotal + generalExtrasTotal;
+        
+        message += `➡ *${item.name}* x${item.quantity} - $${itemTotal}%0A`;
+        
+        // Agregar salsas
+        if (item.sauces && item.sauces.length > 0) {
+            item.sauces.forEach(sauce => {
+                message += `   🍯 ${sauce.name} (+$${sauce.price})%0A`;
+            });
+        }
+        
+        // Agregar adicionales generales
+        if (item.generalExtras && item.generalExtras.length > 0) {
+            item.generalExtras.forEach(extra => {
+                message += `   ➕ ${extra.name} x${extra.quantity} (+$${extra.price * extra.quantity})%0A`;
+            });
+        }
+        
+        // Agregar notas del producto
+        if (item.notes) {
+            message += `   📝 *Nota:* ${item.notes}%0A`;
+        }
     });
     
     if (selectedExtras.length > 0) {
-        message += `%0A*Adicionales:*%0A`;
+        message += `%0A*Adicionales generales:*%0A`;
         selectedExtras.forEach(extra => {
             message += `➡ ${extra.name} - $${extra.price}%0A`;
         });
@@ -460,6 +513,34 @@ function sendOrderViaWhatsApp() {
             
             document.querySelectorAll('.extra-checkbox').forEach(checkbox => {
                 checkbox.checked = false;
+            });
+            
+            // También limpiar los extras específicos de productos
+            document.querySelectorAll('.sauce-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.parentElement.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.general-extra-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.parentElement.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.extra-qty-input').forEach(input => {
+                input.value = 1;
+            });
+            
+            document.querySelectorAll('.product-notes-input').forEach(textarea => {
+                textarea.value = '';
+            });
+            
+            // Cerrar todos los botones de extras
+            document.querySelectorAll('.extras-toggle-btn').forEach(btn => {
+                btn.classList.remove('expanded');
+            });
+            
+            document.querySelectorAll('.extras-container').forEach(container => {
+                container.classList.remove('expanded');
             });
             
             showNotification('Formulario reiniciado. ¡Gracias por tu pedido!', 'success');

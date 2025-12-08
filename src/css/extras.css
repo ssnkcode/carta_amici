@@ -1,0 +1,398 @@
+/* ============================================
+   ESTILOS PARA ADICIONALES Y EXTRAS
+   ============================================ */
+
+/* Botón para desplegar adicionales */
+.extras-toggle-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #000000 0%, #333333 100%);
+    color: #FFD700;
+    border: 2px solid #FFD700;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0 0 0;
+    transition: all 0.3s ease;
+}
+
+.extras-toggle-btn:hover {
+    background: linear-gradient(135deg, #333333 0%, #444444 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.extras-toggle-btn i {
+    transition: transform 0.3s ease;
+}
+
+.extras-toggle-btn.expanded i {
+    transform: rotate(180deg);
+}
+
+/* Contenedor de extras (inicialmente oculto) */
+.extras-container {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.5s ease;
+    margin-top: 0;
+}
+
+.extras-container.expanded {
+    max-height: 1000px;
+    opacity: 1;
+    margin-top: 15px;
+}
+
+/* Sección de salsas adicionales */
+.sauces-section {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #fff8e1;
+    border-radius: 10px;
+    border: 1px solid #ffecb3;
+    animation: fadeIn 0.5s ease;
+}
+
+.sauces-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #000000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sauces-title i {
+    color: #FFD700;
+}
+
+.sauce-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.sauce-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.sauce-option:hover {
+    border-color: #FFD700;
+    box-shadow: 0 2px 5px rgba(255, 215, 0, 0.1);
+}
+
+.sauce-option.selected {
+    border-color: #000000;
+    background-color: #fffde7;
+}
+
+.sauce-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: #000000;
+}
+
+.sauce-name {
+    font-size: 0.9rem;
+    flex-grow: 1;
+}
+
+.sauce-price {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #000000;
+}
+
+/* Sección de adicionales generales */
+.general-extras-section {
+    margin-top: 20px;
+    animation: fadeIn 0.5s ease 0.1s backwards;
+}
+
+.general-extras-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #000000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.general-extras-title i {
+    color: #000000;
+}
+
+.general-extras-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.general-extra-option {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    transition: all 0.3s;
+    cursor: pointer;
+    animation: slideIn 0.3s ease;
+}
+
+.general-extra-option:hover {
+    border-color: #000000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.general-extra-option.selected {
+    border-color: #000000;
+    background-color: #f8f9fa;
+}
+
+.general-extra-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.general-extra-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-grow: 1;
+}
+
+.general-extra-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #000000;
+}
+
+.general-extra-description {
+    font-size: 0.75rem;
+    color: #666;
+    font-style: italic;
+}
+
+.general-extra-price {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #000000;
+    white-space: nowrap;
+}
+
+.extra-quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    animation: fadeIn 0.3s ease;
+}
+
+.extra-qty-btn {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: bold;
+    color: #000000;
+    transition: all 0.2s;
+}
+
+.extra-qty-btn:hover {
+    background: #e9ecef;
+}
+
+.extra-qty-input {
+    width: 35px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #000000;
+    background: white;
+}
+
+/* Campo de notas del producto */
+.product-notes-container {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    animation: fadeIn 0.5s ease 0.2s backwards;
+}
+
+.product-notes-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #000000;
+    margin-bottom: 8px;
+}
+
+.product-notes-label i {
+    color: #FFD700;
+}
+
+.product-notes-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #eee;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: border-color 0.3s;
+    resize: vertical;
+    min-height: 60px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.product-notes-input:focus {
+    border-color: #000000;
+    outline: none;
+}
+
+/* Estilos para los adicionales en el resumen del pedido */
+.cart-extras {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    animation: fadeIn 0.3s ease;
+}
+
+.cart-extras-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #000000;
+    margin-bottom: 8px;
+}
+
+.cart-extra-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px dashed #ddd;
+    font-size: 0.85rem;
+    animation: slideIn 0.3s ease;
+}
+
+.cart-extra-item:last-child {
+    border-bottom: none;
+}
+
+.cart-extra-name {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #555;
+}
+
+.cart-extra-quantity {
+    font-size: 0.8rem;
+    color: #888;
+    background: #eee;
+    padding: 1px 6px;
+    border-radius: 10px;
+}
+
+.cart-extra-price {
+    font-weight: 600;
+    color: #000000;
+}
+
+.cart-product-notes {
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+    padding: 5px 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-top: 5px;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Estilos responsivos para extras */
+@media (max-width: 768px) {
+    .sauce-options {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    .general-extras-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    }
+    
+    .extras-toggle-btn {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .sauce-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .general-extras-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .general-extra-option {
+        padding: 10px;
+    }
+    
+    .extras-toggle-btn {
+        font-size: 0.85rem;
+    }
+}
