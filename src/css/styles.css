@@ -26,8 +26,8 @@ html {
 }
 
 header {
-    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-    color: white;
+    background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%); /* Amarillo en lugar de verde */
+    color: #000000; /* Texto negro */
     padding: 15px 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     position: sticky;
@@ -51,16 +51,70 @@ header {
     align-items: center;
     gap: 15px;
     z-index: 1002;
+    position: relative;
 }
 
-.logo i {
-    font-size: 2rem;
+/* Contenedor del logo con fondo negro elegante */
+.logo-image {
+    background-color: #000000;
+    border-radius: 50%;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 130px;
+    height: 60px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.logo-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 215, 0, 0.6);
+}
+
+/* ESTILOS PARA AJUSTAR EL LOGO DENTRO DEL CONTENEDOR */
+.logo-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: brightness(1.1); /* Para mejorar la visibilidad sobre negro */
+    transform: scale(3.0); /* Agranda el logo un 25% */
+}
+
+/* Logo más grande en desktop */
+@media (max-width: 768px) {
+    .logo-image img {
+        transform: scale(2.8); /* 20% más grande en tablet */
+    }
+}
+
+@media (max-width: 576px) {
+    .logo-image img {
+        transform: scale(2.8); /* 15% más grande en móvil */
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-image img {
+        transform: scale(2.8); /* 10% más grande en móvil pequeño */
+    }
+}
+
+/* Contenedor para el texto del logo */
+.logo-text {
+    display: flex;
+    flex-direction: column;
 }
 
 .logo h1 {
     font-family: 'Dancing Script', cursive;
     font-size: 1.8rem;
     white-space: nowrap;
+    color: #000000; /* Texto negro */
+    text-shadow: 1px 1px 2px rgba(255, 215, 0, 0.3); /* Sutil sombra amarilla */
 }
 
 .tagline {
@@ -68,6 +122,13 @@ header {
     opacity: 0.9;
     margin-top: 2px;
     display: none;
+    color: #333; /* Gris oscuro */
+    font-weight: 500;
+}
+
+/* Añadir un efecto sutil al pasar el mouse sobre toda el área del logo */
+.logo:hover .logo-image {
+    transform: translateY(-2px);
 }
 
 .nav-menu {
@@ -76,8 +137,8 @@ header {
 }
 
 .whatsapp-button {
-    background-color: white;
-    color: #25D366;
+    background-color: #000000; /* Fondo negro */
+    color: #FFD700; /* Texto amarillo */
     padding: 8px 20px;
     border-radius: 50px;
     text-decoration: none;
@@ -89,11 +150,14 @@ header {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
     font-size: 0.95rem;
+    border: 2px solid #FFD700; /* Borde amarillo */
 }
 
 .whatsapp-button:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    background-color: #333; /* Negro más claro al pasar */
+    color: #FFD700;
 }
 
 main {
@@ -110,7 +174,7 @@ main {
 
 .section-title h2 {
     font-size: 1.8rem;
-    color: #128C7E;
+    color: #000000; /* Negro en lugar de verde */
     display: inline-block;
     padding-bottom: 8px;
 }
@@ -120,7 +184,7 @@ main {
     position: absolute;
     width: 60px;
     height: 3px;
-    background: #25D366;
+    background: #FFD700; /* Amarillo en lugar de verde */
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
@@ -176,10 +240,10 @@ main {
 }
 
 .category-tab.active {
-    background-color: #128C7E;
-    color: white;
-    border-color: #128C7E;
-    box-shadow: 0 4px 10px rgba(18, 140, 126, 0.3);
+    background-color: #000000; /* Negro */
+    color: #FFD700; /* Texto amarillo */
+    border-color: #000000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .food-grid {
@@ -202,11 +266,12 @@ main {
 
 .food-item:hover {
     transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .food-item.in-cart {
-    border: 2px solid #25D366;
-    box-shadow: 0 6px 12px rgba(37, 211, 102, 0.2);
+    border: 2px solid #FFD700; /* Amarillo en lugar de verde */
+    box-shadow: 0 6px 12px rgba(255, 215, 0, 0.3);
 }
 
 .food-img {
@@ -227,7 +292,7 @@ main {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 6px;
-    color: #333;
+    color: #000000; /* Negro */
 }
 
 .food-description {
@@ -248,7 +313,7 @@ main {
 
 .food-price {
     font-weight: 700;
-    color: #128C7E;
+    color: #000000; /* Negro en lugar de verde */
     font-size: 1.2rem;
 }
 
@@ -298,8 +363,8 @@ main {
 }
 
 .add-btn {
-    background-color: #25D366;
-    color: white;
+    background-color: #000000; /* Negro */
+    color: #FFD700; /* Texto amarillo */
     border: none;
     padding: 6px 15px;
     border-radius: 5px;
@@ -307,10 +372,11 @@ main {
     font-weight: 600;
     flex-grow: 1;
     transition: background-color 0.3s;
+    border: 1px solid #FFD700;
 }
 
 .add-btn:hover {
-    background-color: #128C7E;
+    background-color: #333; /* Negro más claro */
 }
 
 /* --- CONTENEDOR DE LA COLUMNA DERECHA --- */
@@ -359,7 +425,7 @@ main {
 .item-name {
     font-weight: 600;
     font-size: 0.95rem;
-    color: #333;
+    color: #000000; /* Negro */
 }
 
 .item-unit-price {
@@ -411,7 +477,7 @@ main {
 
 .item-price {
     font-weight: 700;
-    color: #128C7E;
+    color: #000000; /* Negro en lugar de verde */
     font-size: 1rem;
     flex-grow: 1;
     text-align: right;
@@ -463,7 +529,7 @@ main {
     font-size: 1rem;
     font-weight: 600;
     margin-bottom: 12px;
-    color: #333;
+    color: #000000; /* Negro */
 }
 
 .extra-option {
@@ -488,7 +554,7 @@ main {
 .extra-checkbox {
     width: 16px;
     height: 16px;
-    accent-color: #25D366;
+    accent-color: #000000; /* Negro */
 }
 
 .order-summary {
@@ -508,7 +574,7 @@ main {
 .summary-total {
     font-size: 1.2rem;
     font-weight: 700;
-    color: #128C7E;
+    color: #000000; /* Negro en lugar de verde */
     border-top: 2px solid #ddd;
     padding-top: 8px;
     margin-top: 8px;
@@ -531,7 +597,7 @@ main {
     display: block;
     margin-bottom: 6px;
     font-weight: 500;
-    color: #333;
+    color: #000000; /* Negro */
     font-size: 0.95rem;
 }
 
@@ -545,14 +611,14 @@ main {
 }
 
 .form-input:focus {
-    border-color: #25D366;
+    border-color: #000000; /* Negro */
     outline: none;
 }
 
 .submit-btn {
     width: 100%;
-    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
-    color: white;
+    background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%); /* Amarillo */
+    color: #000000; /* Texto negro */
     border: none;
     padding: 12px;
     border-radius: 8px;
@@ -564,11 +630,13 @@ main {
     justify-content: center;
     align-items: center;
     gap: 8px;
+    border: 2px solid #000000;
 }
 
 .submit-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(37, 211, 102, 0.3);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(135deg, #FFC107 0%, #FFA000 100%); /* Amarillo más intenso */
 }
 
 .empty-cart {
@@ -588,8 +656,8 @@ main {
 }
 
 footer {
-    background-color: #333;
-    color: white;
+    background-color: #000000; /* Negro */
+    color: #FFD700; /* Texto amarillo */
     text-align: center;
     padding: 20px 0;
     margin-top: 40px;
@@ -603,8 +671,38 @@ footer {
     gap: 15px;
 }
 
+/* Footer - ajustar el logo para que combine */
+footer .logo-image {
+    background-color: rgba(255, 215, 0, 0.1);
+    border: 2px solid rgba(255, 215, 0, 0.4);
+}
+
+footer .logo-image img {
+    filter: brightness(1.3); /* Más brillo en el footer */
+    transform: scale(1.25); /* Aplicar el mismo escalado */
+}
+
+@media (max-width: 768px) {
+    footer .logo-image img {
+        transform: scale(1.2);
+    }
+}
+
+@media (max-width: 576px) {
+    footer .logo-image img {
+        transform: scale(1.15);
+    }
+}
+
+@media (max-width: 480px) {
+    footer .logo-image img {
+        transform: scale(1.1);
+    }
+}
+
 .footer-content .logo h1 {
     font-size: 1.5rem;
+    color: #FFD700; /* Amarillo */
 }
 
 .footer-content p {
@@ -616,8 +714,8 @@ footer {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: #25D366;
-    color: white;
+    background-color: #000000; /* Negro */
+    color: #FFD700; /* Texto amarillo */
     padding: 12px 20px;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -629,6 +727,7 @@ footer {
     opacity: 0;
     transition: all 0.5s ease;
     max-width: 300px;
+    border: 2px solid #FFD700;
 }
 
 .notification.show {
@@ -638,6 +737,8 @@ footer {
 
 .notification.error {
     background-color: #ff4757;
+    color: white;
+    border-color: #ff4757;
 }
 
 .modal-overlay {
@@ -688,7 +789,7 @@ footer {
 
 .modal-content h3 {
     margin-bottom: 10px;
-    color: #333;
+    color: #000000; /* Negro */
 }
 
 .modal-content p {
@@ -736,9 +837,9 @@ footer {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background-color: #25D366; /* Verde marca */
-    color: white;
-    border: none;
+    background-color: #000000; /* Negro */
+    color: #FFD700; /* Texto amarillo */
+    border: 2px solid #FFD700; /* Borde amarillo */
     padding: 12px 25px;
     border-radius: 50px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
@@ -758,7 +859,7 @@ footer {
 }
 
 .floating-cart-btn:hover {
-    background-color: #128C7E;
+    background-color: #333; /* Negro más claro */
     transform: translateX(-50%) translateY(-3px);
 }
 
@@ -794,6 +895,13 @@ footer {
     
     .tagline {
         display: block;
+        color: #333;
+    }
+    
+    .logo-image {
+        width: 50px;
+        height: 50px;
+        padding: 6px;
     }
 }
 
@@ -806,8 +914,10 @@ footer {
         gap: 10px;
     }
     
-    .logo i {
-        font-size: 1.8rem;
+    .logo-image {
+        width: 45px;
+        height: 45px;
+        padding: 5px;
     }
     
     .logo h1 {
@@ -835,11 +945,6 @@ footer {
         font-size: 1.1rem;
     }
     
-    .select-btn {
-        padding: 5px 10px;
-        font-size: 0.85rem;
-    }
-    
     .section-title h2 {
         font-size: 1.4rem;
     }
@@ -864,8 +969,19 @@ footer {
 }
 
 @media (max-width: 480px) {
-    .logo h1 { font-size: 1.2rem; }
-    .tagline { font-size: 0.7rem; }
+    .logo h1 { 
+        font-size: 1.2rem; 
+    }
+    
+    .logo-image {
+        width: 40px;
+        height: 40px;
+        padding: 4px;
+    }
+    
+    .tagline { 
+        font-size: 0.7rem; 
+    }
     
     .whatsapp-button {
         padding: 8px 12px;
