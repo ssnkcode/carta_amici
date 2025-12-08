@@ -10,7 +10,6 @@ body {
     color: #333;
     line-height: 1.6;
     overflow-x: hidden;
-    padding-bottom: 80px;
 }
 
 html {
@@ -26,8 +25,8 @@ html {
 }
 
 header {
-    background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%); /* Amarillo en lugar de verde */
-    color: #000000; /* Texto negro */
+    background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%);
+    color: #000000;
     padding: 15px 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     position: sticky;
@@ -54,7 +53,6 @@ header {
     position: relative;
 }
 
-/* Contenedor del logo con fondo negro elegante */
 .logo-image {
     background-color: #000000;
     border-radius: 50%;
@@ -75,35 +73,32 @@ header {
     border-color: rgba(255, 215, 0, 0.6);
 }
 
-/* ESTILOS PARA AJUSTAR EL LOGO DENTRO DEL CONTENEDOR */
 .logo-image img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: brightness(1.1); /* Para mejorar la visibilidad sobre negro */
-    transform: scale(3.0); /* Agranda el logo un 25% */
+    filter: brightness(1.1);
+    transform: scale(3.0);
 }
 
-/* Logo más grande en desktop */
 @media (max-width: 768px) {
     .logo-image img {
-        transform: scale(2.8); /* 20% más grande en tablet */
+        transform: scale(2.8);
     }
 }
 
 @media (max-width: 576px) {
     .logo-image img {
-        transform: scale(2.8); /* 15% más grande en móvil */
+        transform: scale(2.8);
     }
 }
 
 @media (max-width: 480px) {
     .logo-image img {
-        transform: scale(2.8); /* 10% más grande en móvil pequeño */
+        transform: scale(2.8);
     }
 }
 
-/* Contenedor para el texto del logo */
 .logo-text {
     display: flex;
     flex-direction: column;
@@ -113,8 +108,8 @@ header {
     font-family: 'Dancing Script', cursive;
     font-size: 1.8rem;
     white-space: nowrap;
-    color: #000000; /* Texto negro */
-    text-shadow: 1px 1px 2px rgba(255, 215, 0, 0.3); /* Sutil sombra amarilla */
+    color: #000000;
+    text-shadow: 1px 1px 2px rgba(255, 215, 0, 0.3);
 }
 
 .tagline {
@@ -122,11 +117,10 @@ header {
     opacity: 0.9;
     margin-top: 2px;
     display: none;
-    color: #333; /* Gris oscuro */
+    color: #333;
     font-weight: 500;
 }
 
-/* Añadir un efecto sutil al pasar el mouse sobre toda el área del logo */
 .logo:hover .logo-image {
     transform: translateY(-2px);
 }
@@ -137,8 +131,8 @@ header {
 }
 
 .whatsapp-button {
-    background-color: #000000; /* Fondo negro */
-    color: #FFD700; /* Texto amarillo */
+    background-color: #000000;
+    color: #FFD700;
     padding: 8px 20px;
     border-radius: 50px;
     text-decoration: none;
@@ -150,13 +144,13 @@ header {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
     font-size: 0.95rem;
-    border: 2px solid #FFD700; /* Borde amarillo */
+    border: 2px solid #FFD700;
 }
 
 .whatsapp-button:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-    background-color: #333; /* Negro más claro al pasar */
+    background-color: #333;
     color: #FFD700;
 }
 
@@ -174,7 +168,7 @@ main {
 
 .section-title h2 {
     font-size: 1.8rem;
-    color: #000000; /* Negro en lugar de verde */
+    color: #000000;
     display: inline-block;
     padding-bottom: 8px;
 }
@@ -184,7 +178,7 @@ main {
     position: absolute;
     width: 60px;
     height: 3px;
-    background: #FFD700; /* Amarillo en lugar de verde */
+    background: #FFD700;
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
@@ -240,8 +234,8 @@ main {
 }
 
 .category-tab.active {
-    background-color: #000000; /* Negro */
-    color: #FFD700; /* Texto amarillo */
+    background-color: #000000;
+    color: #FFD700;
     border-color: #000000;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
@@ -250,27 +244,31 @@ main {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 15px;
+    align-items: start;
 }
 
 .food-item {
     background: white;
     border-radius: 10px;
-    overflow: hidden;
+    overflow: visible; /* IMPORTANTE: Para que el menú flotante se vea */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0s;
     border: 2px solid transparent;
-    height: 100%;
+    height: fit-content;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 1;
 }
 
-.food-item:hover {
+.food-item:hover, .food-item:focus-within {
     transform: translateY(-5px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100; /* Hace que la tarjeta activa flote sobre las otras */
 }
 
 .food-item.in-cart {
-    border: 2px solid #FFD700; /* Amarillo en lugar de verde */
+    border: 2px solid #FFD700;
     box-shadow: 0 6px 12px rgba(255, 215, 0, 0.3);
 }
 
@@ -279,6 +277,7 @@ main {
     width: 100%;
     background-size: cover;
     background-position: center;
+    border-radius: 10px 10px 0 0; /* Bordes redondeados solo arriba */
 }
 
 .food-content {
@@ -286,13 +285,14 @@ main {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    position: static;
 }
 
 .food-title {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 6px;
-    color: #000000; /* Negro */
+    color: #000000;
 }
 
 .food-description {
@@ -300,29 +300,30 @@ main {
     color: #666;
     margin-bottom: 10px;
     line-height: 1.4;
-    height: 40px;
-    overflow: hidden;
+    min-height: 40px;
 }
 
 .food-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: auto;
+    margin-bottom: 10px;
 }
 
 .food-price {
     font-weight: 700;
-    color: #000000; /* Negro en lugar de verde */
+    color: #000000;
     font-size: 1.2rem;
 }
 
 .card-actions {
-    margin-top: 10px;
+    margin-top: 15px;
     display: flex;
     gap: 10px;
     align-items: center;
     justify-content: space-between;
+    margin-top: auto; 
+    padding-top: 10px;
 }
 
 .quantity-selector {
@@ -363,8 +364,8 @@ main {
 }
 
 .add-btn {
-    background-color: #000000; /* Negro */
-    color: #FFD700; /* Texto amarillo */
+    background-color: #000000;
+    color: #FFD700;
     border: none;
     padding: 6px 15px;
     border-radius: 5px;
@@ -376,10 +377,9 @@ main {
 }
 
 .add-btn:hover {
-    background-color: #333; /* Negro más claro */
+    background-color: #333;
 }
 
-/* --- CONTENEDOR DE LA COLUMNA DERECHA --- */
 .order-sidebar {
     position: sticky;
     top: 100px;
@@ -425,7 +425,7 @@ main {
 .item-name {
     font-weight: 600;
     font-size: 0.95rem;
-    color: #000000; /* Negro */
+    color: #000000;
 }
 
 .item-unit-price {
@@ -477,7 +477,7 @@ main {
 
 .item-price {
     font-weight: 700;
-    color: #000000; /* Negro en lugar de verde */
+    color: #000000;
     font-size: 1rem;
     flex-grow: 1;
     text-align: right;
@@ -529,7 +529,7 @@ main {
     font-size: 1rem;
     font-weight: 600;
     margin-bottom: 12px;
-    color: #000000; /* Negro */
+    color: #000000;
 }
 
 .extra-option {
@@ -554,7 +554,7 @@ main {
 .extra-checkbox {
     width: 16px;
     height: 16px;
-    accent-color: #000000; /* Negro */
+    accent-color: #000000;
 }
 
 .order-summary {
@@ -574,7 +574,7 @@ main {
 .summary-total {
     font-size: 1.2rem;
     font-weight: 700;
-    color: #000000; /* Negro en lugar de verde */
+    color: #000000;
     border-top: 2px solid #ddd;
     padding-top: 8px;
     margin-top: 8px;
@@ -597,7 +597,7 @@ main {
     display: block;
     margin-bottom: 6px;
     font-weight: 500;
-    color: #000000; /* Negro */
+    color: #000000;
     font-size: 0.95rem;
 }
 
@@ -611,14 +611,14 @@ main {
 }
 
 .form-input:focus {
-    border-color: #000000; /* Negro */
+    border-color: #000000;
     outline: none;
 }
 
 .submit-btn {
     width: 100%;
-    background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%); /* Amarillo */
-    color: #000000; /* Texto negro */
+    background: linear-gradient(135deg, #FFD700 0%, #FFC107 100%);
+    color: #000000;
     border: none;
     padding: 12px;
     border-radius: 8px;
@@ -636,7 +636,7 @@ main {
 .submit-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(135deg, #FFC107 0%, #FFA000 100%); /* Amarillo más intenso */
+    background: linear-gradient(135deg, #FFC107 0%, #FFA000 100%);
 }
 
 .empty-cart {
@@ -656,8 +656,8 @@ main {
 }
 
 footer {
-    background-color: #000000; /* Negro */
-    color: #FFD700; /* Texto amarillo */
+    background-color: #000000;
+    color: #FFD700;
     text-align: center;
     padding: 20px 0;
     margin-top: 40px;
@@ -671,15 +671,14 @@ footer {
     gap: 15px;
 }
 
-/* Footer - ajustar el logo para que combine */
 footer .logo-image {
     background-color: rgba(255, 215, 0, 0.1);
     border: 2px solid rgba(255, 215, 0, 0.4);
 }
 
 footer .logo-image img {
-    filter: brightness(1.3); /* Más brillo en el footer */
-    transform: scale(1.25); /* Aplicar el mismo escalado */
+    filter: brightness(1.3);
+    transform: scale(1.25);
 }
 
 @media (max-width: 768px) {
@@ -702,7 +701,7 @@ footer .logo-image img {
 
 .footer-content .logo h1 {
     font-size: 1.5rem;
-    color: #FFD700; /* Amarillo */
+    color: #FFD700;
 }
 
 .footer-content p {
@@ -714,8 +713,8 @@ footer .logo-image img {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background-color: #000000; /* Negro */
-    color: #FFD700; /* Texto amarillo */
+    background-color: #000000;
+    color: #FFD700;
     padding: 12px 20px;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
@@ -789,7 +788,7 @@ footer .logo-image img {
 
 .modal-content h3 {
     margin-bottom: 10px;
-    color: #000000; /* Negro */
+    color: #000000;
 }
 
 .modal-content p {
@@ -831,15 +830,14 @@ footer .logo-image img {
     background-color: #ff2e43;
 }
 
-/* --- ESTILOS DEL BOTÓN FLOTANTE --- */
 .floating-cart-btn {
     position: fixed;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background-color: #000000; /* Negro */
-    color: #FFD700; /* Texto amarillo */
-    border: 2px solid #FFD700; /* Borde amarillo */
+    background-color: #000000;
+    color: #FFD700;
+    border: 2px solid #FFD700;
     padding: 12px 25px;
     border-radius: 50px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
@@ -859,7 +857,7 @@ footer .logo-image img {
 }
 
 .floating-cart-btn:hover {
-    background-color: #333; /* Negro más claro */
+    background-color: #333;
     transform: translateX(-50%) translateY(-3px);
 }
 

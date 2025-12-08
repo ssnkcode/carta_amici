@@ -181,7 +181,6 @@ function processOrder() {
     // Obtener carrito actual
     const carrito = getCarritoActual();
     
-    // Calcular totales
     const subtotal = calculateSubtotal();
     const envio = FORM_CONFIG.defaultDeliveryCost;
     const total = subtotal + envio;
