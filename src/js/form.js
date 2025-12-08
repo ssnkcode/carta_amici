@@ -1,5 +1,3 @@
-// form.js - VERSIÓN FINAL CON CARRITO REAL
-
 const FORM_CONFIG = {
     phonePattern: /^[0-9]{10,15}$/,
     defaultDeliveryCost: 300,
@@ -13,38 +11,26 @@ const FORM_CONFIG = {
 
 console.log("✅ form.js cargado");
 
-// ============================================
-// CONEXIÓN CON EL CARRITO REAL
-// ============================================
-
-// 1. SINCRONIZAR CON EL CARRITO EXISTENTE
 console.log("🔗 Conectando con el carrito real...");
 
-// Verificar si selectedItems existe (la variable global real)
 if (typeof selectedItems !== 'undefined') {
-    // La variable selectedItems ya existe globalmente (sin window)
     console.log("✓ Carrito encontrado en variable global 'selectedItems'");
     console.log("  - Productos:", selectedItems.length);
     console.log("  - Detalles:", selectedItems.map(p => `${p.name} x${p.quantity}`));
     
-    // Crear alias para compatibilidad
     window.selectedItems = selectedItems;
 } else {
     console.warn("⚠️ Variable selectedItems no encontrada");
     window.selectedItems = [];
 }
 
-// 2. Función para obtener siempre el carrito actual
 function getCarritoActual() {
-    // Primero intentar con la variable global
     if (typeof selectedItems !== 'undefined' && Array.isArray(selectedItems)) {
         return selectedItems;
     }
-    // Luego con window.selectedItems
     if (window.selectedItems && Array.isArray(window.selectedItems)) {
         return window.selectedItems;
     }
-    // Finalmente con localStorage
     try {
         const saved = localStorage.getItem('deliciasExpress_selectedItems');
         if (saved) {
@@ -55,11 +41,6 @@ function getCarritoActual() {
     return [];
 }
 
-// ============================================
-// FUNCIONES PRINCIPALES
-// ============================================
-
-// Configurar mapa
 function setupMap() {
     console.log("🗺️ Configurando mapa...");
     
@@ -88,7 +69,6 @@ function setupMap() {
     console.log("✅ Mapa configurado");
 }
 
-// Calcular subtotal (usa el carrito real)
 function calculateSubtotal() {
     const carrito = getCarritoActual();
     console.log("🧮 Calculando subtotal de", carrito.length, "productos...");
@@ -103,11 +83,9 @@ function calculateSubtotal() {
     return subtotal;
 }
 
-// Validar formulario (usa el carrito real)
 function validateForm() {
     console.log("🔍 Validando formulario...");
     
-    // 1. Verificar carrito
     const carrito = getCarritoActual();
     console.log("   - Productos en carrito:", carrito.length);
     
@@ -119,7 +97,6 @@ function validateForm() {
     
     console.log("✅ Carrito OK");
     
-    // 2. Verificar campos mínimos requeridos
     const campos = [
         {id: 'customer-name', nombre: 'nombre'},
         {id: 'customer-phone', nombre: 'WhatsApp'},
@@ -157,7 +134,6 @@ function validateForm() {
     return true;
 }
 
-// Procesar pedido (genera mensaje detallado)
 function processOrder() {
     console.log("📞 Procesando pedido para WhatsApp...");
     
@@ -166,7 +142,6 @@ function processOrder() {
         return;
     }
     
-    // Obtener datos del formulario
     const nombre = document.getElementById('customer-name').value.trim();
     const telefono = document.getElementById('customer-phone').value.trim();
     const ciudad = document.getElementById('customer-city').value.trim();
@@ -175,17 +150,14 @@ function processOrder() {
     const barrio = document.getElementById('customer-neighborhood').value.trim();
     const notas = document.getElementById('order-notes')?.value.trim() || '';
     
-    // Construir dirección completa
     const direccion = `${calle} ${numero}, ${barrio}, ${ciudad}`;
     
-    // Obtener carrito actual
     const carrito = getCarritoActual();
     
     const subtotal = calculateSubtotal();
     const envio = FORM_CONFIG.defaultDeliveryCost;
     const total = subtotal + envio;
     
-    // Generar mensaje detallado para WhatsApp
     let mensaje = `📋 *NUEVO PEDIDO - COMIDAS AMICI*\n\n`;
     
     mensaje += `👤 *CLIENTE:* ${nombre}\n`;
@@ -199,7 +171,6 @@ function processOrder() {
     mensaje += `\n🛒 *DETALLE DEL PEDIDO:*\n`;
     mensaje += `══════════════════════════\n`;
     
-    // Listar productos
     carrito.forEach((item, index) => {
         const nombreProducto = item.name || 'Producto';
         const cantidad = item.quantity || 1;
@@ -209,20 +180,17 @@ function processOrder() {
         mensaje += `${index + 1}. *${nombreProducto}* x${cantidad}\n`;
         mensaje += `   Precio unitario: $${precio}\n`;
         
-        // Mostrar salsas si tiene
         if (item.sauces && item.sauces.length > 0) {
             const salsas = item.sauces.map(s => s.name).join(', ');
             mensaje += `   🧂 Salsas: ${salsas}\n`;
         }
         
-        // Mostrar extras si tiene
         if (item.generalExtras && item.generalExtras.length > 0) {
             item.generalExtras.forEach(extra => {
                 mensaje += `   ➕ ${extra.name} x${extra.quantity || 1}\n`;
             });
         }
         
-        // Mostrar notas del producto
         if (item.notes) {
             mensaje += `   📝 Notas: ${item.notes}\n`;
         }
@@ -247,7 +215,6 @@ function processOrder() {
     console.log("📝 Mensaje generado (primeras 300 caracteres):");
     console.log(mensaje.substring(0, 300) + "...");
     
-    // Enviar por WhatsApp
     const telefonoNegocio = '5493541682310';
     const mensajeCodificado = encodeURIComponent(mensaje);
     const urlWhatsApp = `https://wa.me/${telefonoNegocio}?text=${mensajeCodificado}`;
@@ -255,7 +222,6 @@ function processOrder() {
     console.log("📤 Abriendo WhatsApp...");
     window.open(urlWhatsApp, '_blank');
     
-    // Mostrar confirmación
     if (typeof showNotification === 'function') {
         showNotification('¡Pedido listo para enviar por WhatsApp!', 'success');
     } else {
@@ -263,17 +229,11 @@ function processOrder() {
     }
 }
 
-// ============================================
-// INICIALIZACIÓN
-// ============================================
-
 function initForm() {
     console.log("🔄 Inicializando sistema de pedidos...");
     
-    // Configurar mapa
     setupMap();
     
-    // Configurar evento del formulario
     const formulario = document.getElementById('order-form');
     if (formulario) {
         formulario.addEventListener('submit', function(e) {
@@ -286,36 +246,23 @@ function initForm() {
         console.error("❌ No se encontró #order-form");
     }
     
-    // Mostrar estado actual del carrito
     const carrito = getCarritoActual();
     console.log("📦 Estado del carrito:", carrito.length, "productos");
     console.log("💰 Subtotal actual: $", calculateSubtotal());
 }
 
-// ============================================
-// HACER FUNCIONES GLOBALES
-// ============================================
-
-// Exportar funciones principales
 window.calculateSubtotal = calculateSubtotal;
 window.validateForm = validateForm;
 window.processOrder = processOrder;
 window.getCarritoActual = getCarritoActual;
 
-// Sincronizar selectedItems con el sistema global
 if (typeof selectedItems !== 'undefined') {
     window.selectedItems = selectedItems;
 }
 
-// ============================================
-// AUTO-INICIALIZACIÓN
-// ============================================
-
-// Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initForm);
 } else {
-    // Si ya está cargado, inicializar con un pequeño delay
     setTimeout(initForm, 100);
 }
 
