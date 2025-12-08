@@ -1,17 +1,15 @@
 // form.js - Funcionalidades para formulario de cliente y mapa
 
-// Configuración inicial
 const FORM_CONFIG = {
-    phonePattern: /^[0-9]{10,15}$/, // Patrón para números de teléfono
+    phonePattern: /^[0-9]{10,15}$/,
     defaultDeliveryCost: 300,
     businessLocation: {
-        address: "Calle Principal 123, Ciudad",
-        lat: -34.6037, // Latitud del negocio (ejemplo: Buenos Aires)
-        lng: -58.3816, // Longitud del negocio (ejemplo: Buenos Aires)
-        zoom: 15
+        address: "Av. Roque Sáenz Peña, Córdoba Capital, Córdoba", 
+        lat: -31.307277,  
+        lng: -64.463337,    
+        zoom: 16 
     }
 };
-
 // Inicializar formulario y mapa
 function initFormAndMap() {
     setupFormValidation();
@@ -175,23 +173,47 @@ function validateForm() {
 
 // Configurar mapa de ubicación
 function setupMap() {
-    const mapFrame = document.getElementById('map-frame');
-    if (!mapFrame) return;
+    console.log("🔄 Configurando mapa OpenStreetMap para Córdoba...");
     
-    // Crear iframe de Google Maps
-    const mapUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3284.016713276848!2d${FORM_CONFIG.businessLocation.lng}!3d${FORM_CONFIG.businessLocation.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzTCsDM2JzEzLjMiUyA1OMKwMjInNTQuNyJX!5e0!3m2!1ses!2sar!4v1629999999999!5m2!1ses!2sar&z=${FORM_CONFIG.businessLocation.zoom}`;
+    const mapFrame = document.getElementById('map-frame');
+    if (!mapFrame) {
+        console.error("❌ No se encontró #map-frame");
+        return;
+    }
+    
+    const lat = FORM_CONFIG.businessLocation.lat;
+    const lng = FORM_CONFIG.businessLocation.lng;
+    
+    // Ajustar el "bbox" para un zoom adecuado (números más pequeños = zoom más cercano)
+    const bboxAdjust = 0.003; // Ajusta este valor: más pequeño = zoom más cercano
+    
+    const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${
+        lng - bboxAdjust
+    }%2C${
+        lat - bboxAdjust
+    }%2C${
+        lng + bboxAdjust
+    }%2C${
+        lat + bboxAdjust
+    }&layer=mapnik&marker=${lat}%2C${lng}`;
     
     mapFrame.innerHTML = `
-        <iframe 
-            src="${mapUrl}" 
-            width="100%" 
-            height="100%" 
-            style="border:0;" 
-            allowfullscreen="" 
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade">
-        </iframe>
+        <div class="map-container" style="width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <iframe 
+                src="${osmUrl}"
+                width="100%" 
+                height="100%" 
+                style="border: none;"
+                allowfullscreen
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                title="Comidas AMICI - ${FORM_CONFIG.businessLocation.address}">
+            </iframe>
+        </div>
     `;
+    
+    console.log("✅ Mapa OpenStreetMap configurado");
+    console.log("📍 Ver en Google Maps:", `https://maps.google.com/?q=${lat},${lng}`);
 }
 
 // Procesar pedido y generar mensaje de WhatsApp
