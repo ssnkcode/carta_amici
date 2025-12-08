@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./src/css/styles.css">
     <link rel="stylesheet" href="./src/css/extras.css">
+    <link rel="stylesheet" href="./src/css/form.css">
 </head>
 <body>
     <header>
@@ -111,29 +112,105 @@
             
             <form id="order-form">
                 <div class="form-group">
-                    <label class="form-label" for="customer-name">Nombre completo *</label>
-                    <input type="text" id="customer-name" class="form-input" placeholder="Ingresa tu nombre" required>
+                    <label class="form-label" for="customer-name">
+                        <i class="fas fa-user"></i> Nombre completo *
+                    </label>
+                    <input type="text" id="customer-name" class="form-input" placeholder="Ingresa tu nombre completo" required>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="customer-phone">Número de WhatsApp *</label>
-                    <input type="tel" id="customer-phone" class="form-input" placeholder="Ej: 1122334455" required>
+                    <label class="form-label" for="customer-phone">
+                        <i class="fab fa-whatsapp"></i> Número de WhatsApp *
+                    </label>
+                    <input type="tel" id="customer-phone" class="form-input" placeholder="Ej: 1122334455 (solo números)" required>
+                </div>
+                
+                <h3 class="form-subtitle">
+                    <i class="fas fa-map-marker-alt"></i> Dirección de entrega *
+                </h3>
+                
+                <div class="address-fields">
+                    <div class="address-group">
+                        <label class="address-label" for="customer-city">
+                            <i class="fas fa-city"></i> Ciudad *
+                        </label>
+                        <input type="text" id="customer-city" class="address-input" placeholder="Nombre de la ciudad" required>
+                    </div>
+                    
+                    <div class="address-group address-full">
+                        <label class="address-label" for="customer-street">
+                            <i class="fas fa-road"></i> Calle *
+                        </label>
+                        <input type="text" id="customer-street" class="address-input" placeholder="Nombre de la calle" required>
+                    </div>
+                    
+                    <div class="address-group">
+                        <label class="address-label" for="customer-number">
+                            <i class="fas fa-hashtag"></i> Número *
+                        </label>
+                        <input type="text" id="customer-number" class="address-input" placeholder="Número" required>
+                    </div>
+                    
+                    <div class="address-group">
+                        <label class="address-label" for="customer-neighborhood">
+                            <i class="fas fa-home"></i> Barrio *
+                        </label>
+                        <input type="text" id="customer-neighborhood" class="address-input" placeholder="Nombre del barrio" required>
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="customer-address">Dirección de entrega *</label>
-                    <input type="text" id="customer-address" class="form-input" placeholder="Calle, número, barrio" required>
+                    <label class="form-label" for="order-notes">
+                        <i class="fas fa-sticky-note"></i> Notas adicionales (opcional)
+                    </label>
+                    <textarea id="order-notes" class="form-input" placeholder="Indicaciones especiales, alergias, instrucciones de entrega, etc." rows="3"></textarea>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label" for="order-notes">Notas adicionales (opcional)</label>
-                    <textarea id="order-notes" class="form-input" placeholder="Indicaciones especiales, alergias, etc." rows="3"></textarea>
+                <div class="contact-info">
+                    <h3><i class="fas fa-info-circle"></i> Información de contacto</h3>
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <i class="fas fa-phone-alt contact-icon"></i>
+                            <div class="contact-text">
+                                <strong>Teléfono:</strong>
+                                <span>+54 11 2233-4455</span>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fab fa-whatsapp contact-icon"></i>
+                            <div class="contact-text">
+                                <strong>WhatsApp:</strong>
+                                <span>+54 11 2233-4455</span>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-clock contact-icon"></i>
+                            <div class="contact-text">
+                                <strong>Horarios:</strong>
+                                <span>Lun-Dom: 12:00 - 00:00</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <button type="submit" class="submit-btn">
                     <i class="fab fa-whatsapp"></i> Enviar pedido por WhatsApp
                 </button>
             </form>
+            
+            <div class="map-container">
+                <div class="map-header">
+                    <h3><i class="fas fa-map-marked-alt"></i> Nuestra ubicación</h3>
+                    <span class="map-info">Zona de cobertura de entregas</span>
+                </div>
+                <div class="map-frame" id="map-frame">
+                    <div class="map-placeholder">
+                        <i class="fas fa-map"></i>
+                        <h4>Mapa de ubicación</h4>
+                        <p>Cargando información de nuestra ubicación y zona de cobertura...</p>
+                    </div>
+                </div>
+            </div>
         </section>
     </main>
     
@@ -186,5 +263,16 @@
 
     <script src="./src/js/main.js"></script>
     <script src="./src/js/extras.js"></script>
+    <script src="./src/js/form.js"></script>
+    
+    <script>
+        // Inicializar cuando el DOM esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar formulario y mapa
+            if (typeof initFormAndMap === 'function') {
+                initFormAndMap();
+            }
+        });
+    </script>
 </body>
 </html>

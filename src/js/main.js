@@ -575,3 +575,11 @@ document.addEventListener('touchmove', function(e) {
         e.preventDefault();
     }
 }, {passive: false});
+
+// Inicializar formulario y mapa cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Si el archivo form.js está cargado, inicializar
+    if (typeof initFormAndMap === 'function') {
+        initFormAndMap();
+    }
+});
