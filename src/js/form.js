@@ -1,4 +1,4 @@
-// form.js - Funcionalidades para formulario de cliente y mapa
+// form.js - VERSIÓN FINAL CON CARRITO REAL
 
 const FORM_CONFIG = {
     phonePattern: /^[0-9]{10,15}$/,
@@ -10,381 +10,315 @@ const FORM_CONFIG = {
         zoom: 16 
     }
 };
-// Inicializar formulario y mapa
-function initFormAndMap() {
-    setupFormValidation();
-    setupMap();
-    setupPhoneMask();
+
+console.log("✅ form.js cargado");
+
+// ============================================
+// CONEXIÓN CON EL CARRITO REAL
+// ============================================
+
+// 1. SINCRONIZAR CON EL CARRITO EXISTENTE
+console.log("🔗 Conectando con el carrito real...");
+
+// Verificar si selectedItems existe (la variable global real)
+if (typeof selectedItems !== 'undefined') {
+    // La variable selectedItems ya existe globalmente (sin window)
+    console.log("✓ Carrito encontrado en variable global 'selectedItems'");
+    console.log("  - Productos:", selectedItems.length);
+    console.log("  - Detalles:", selectedItems.map(p => `${p.name} x${p.quantity}`));
+    
+    // Crear alias para compatibilidad
+    window.selectedItems = selectedItems;
+} else {
+    console.warn("⚠️ Variable selectedItems no encontrada");
+    window.selectedItems = [];
 }
 
-// Configurar máscara para teléfono
-function setupPhoneMask() {
-    const phoneInput = document.getElementById('customer-phone');
-    if (!phoneInput) return;
-    
-    phoneInput.addEventListener('input', function(e) {
-        // Solo permitir números
-        let value = e.target.value.replace(/\D/g, '');
-        
-        // Limitar a 15 dígitos
-        if (value.length > 15) {
-            value = value.substring(0, 15);
+// 2. Función para obtener siempre el carrito actual
+function getCarritoActual() {
+    // Primero intentar con la variable global
+    if (typeof selectedItems !== 'undefined' && Array.isArray(selectedItems)) {
+        return selectedItems;
+    }
+    // Luego con window.selectedItems
+    if (window.selectedItems && Array.isArray(window.selectedItems)) {
+        return window.selectedItems;
+    }
+    // Finalmente con localStorage
+    try {
+        const saved = localStorage.getItem('deliciasExpress_selectedItems');
+        if (saved) {
+            return JSON.parse(saved);
         }
-        
-        e.target.value = value;
-    });
+    } catch(e) {}
+    
+    return [];
 }
 
-// Configurar validación del formulario
-function setupFormValidation() {
-    const form = document.getElementById('order-form');
-    if (!form) return;
-    
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        if (validateForm()) {
-            processOrder();
-        }
-    });
-    
-    // Validación en tiempo real
-    const inputs = form.querySelectorAll('input[required], textarea[required]');
-    inputs.forEach(input => {
-        input.addEventListener('blur', function() {
-            validateField(this);
-        });
-        
-        input.addEventListener('input', function() {
-            clearFieldError(this);
-        });
-    });
-}
+// ============================================
+// FUNCIONES PRINCIPALES
+// ============================================
 
-// Validar campo individual
-function validateField(field) {
-    const value = field.value.trim();
-    let isValid = true;
-    let errorMessage = '';
-    
-    switch (field.id) {
-        case 'customer-name':
-            if (value.length < 2) {
-                isValid = false;
-                errorMessage = 'El nombre debe tener al menos 2 caracteres';
-            }
-            break;
-            
-        case 'customer-phone':
-            if (!FORM_CONFIG.phonePattern.test(value)) {
-                isValid = false;
-                errorMessage = 'Ingresa un número de WhatsApp válido (10-15 dígitos)';
-            }
-            break;
-            
-        case 'customer-city':
-        case 'customer-street':
-            if (value.length < 2) {
-                isValid = false;
-                errorMessage = 'Este campo es requerido';
-            }
-            break;
-            
-        case 'customer-number':
-            if (!value) {
-                isValid = false;
-                errorMessage = 'Ingresa el número de dirección';
-            }
-            break;
-            
-        case 'customer-neighborhood':
-            if (value.length < 2) {
-                isValid = false;
-                errorMessage = 'Ingresa el barrio';
-            }
-            break;
-    }
-    
-    if (!isValid) {
-        showFieldError(field, errorMessage);
-    } else {
-        clearFieldError(field);
-    }
-    
-    return isValid;
-}
-
-// Mostrar error en campo
-function showFieldError(field, message) {
-    clearFieldError(field);
-    
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'field-error';
-    errorDiv.style.color = '#dc3545';
-    errorDiv.style.fontSize = '0.8rem';
-    errorDiv.style.marginTop = '5px';
-    errorDiv.style.display = 'flex';
-    errorDiv.style.alignItems = 'center';
-    errorDiv.style.gap = '5px';
-    errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-    
-    field.parentNode.appendChild(errorDiv);
-    field.style.borderColor = '#dc3545';
-}
-
-// Limpiar error de campo
-function clearFieldError(field) {
-    const errorDiv = field.parentNode.querySelector('.field-error');
-    if (errorDiv) {
-        errorDiv.remove();
-    }
-    field.style.borderColor = '';
-}
-
-// Validar formulario completo
-function validateForm() {
-    let isValid = true;
-    
-    // Verificar que haya items en el carrito
-    if (selectedItems.length === 0) {
-        showNotification('Agrega productos al carrito antes de completar el pedido', 'error');
-        return false;
-    }
-    
-    // Validar campos requeridos
-    const requiredFields = [
-        'customer-name',
-        'customer-phone',
-        'customer-city',
-        'customer-street',
-        'customer-number',
-        'customer-neighborhood'
-    ];
-    
-    requiredFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field && !validateField(field)) {
-            isValid = false;
-        }
-    });
-    
-    return isValid;
-}
-
-// Configurar mapa de ubicación
+// Configurar mapa
 function setupMap() {
-    console.log("🔄 Configurando mapa OpenStreetMap para Córdoba...");
+    console.log("🗺️ Configurando mapa...");
     
     const mapFrame = document.getElementById('map-frame');
     if (!mapFrame) {
-        console.error("❌ No se encontró #map-frame");
+        console.error("❌ #map-frame no encontrado");
         return;
     }
     
     const lat = FORM_CONFIG.businessLocation.lat;
     const lng = FORM_CONFIG.businessLocation.lng;
-    
-    // Ajustar el "bbox" para un zoom adecuado (números más pequeños = zoom más cercano)
-    const bboxAdjust = 0.003; // Ajusta este valor: más pequeño = zoom más cercano
-    
-    const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${
-        lng - bboxAdjust
-    }%2C${
-        lat - bboxAdjust
-    }%2C${
-        lng + bboxAdjust
-    }%2C${
-        lat + bboxAdjust
-    }&layer=mapnik&marker=${lat}%2C${lng}`;
+    const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.003},${lat-0.003},${lng+0.003},${lat+0.003}&layer=mapnik&marker=${lat},${lng}`;
     
     mapFrame.innerHTML = `
-        <div class="map-container" style="width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <iframe 
-                src="${osmUrl}"
-                width="100%" 
-                height="100%" 
-                style="border: none;"
-                allowfullscreen
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade"
-                title="Comidas AMICI - ${FORM_CONFIG.businessLocation.address}">
-            </iframe>
-        </div>
+        <iframe 
+            src="${osmUrl}"
+            width="100%" 
+            height="100%" 
+            style="border:none;"
+            allowfullscreen
+            loading="lazy"
+            title="Comidas AMICI - ${FORM_CONFIG.businessLocation.address}">
+        </iframe>
     `;
     
-    console.log("✅ Mapa OpenStreetMap configurado");
-    console.log("📍 Ver en Google Maps:", `https://maps.google.com/?q=${lat},${lng}`);
+    console.log("✅ Mapa configurado");
 }
 
-// Procesar pedido y generar mensaje de WhatsApp
+// Calcular subtotal (usa el carrito real)
+function calculateSubtotal() {
+    const carrito = getCarritoActual();
+    console.log("🧮 Calculando subtotal de", carrito.length, "productos...");
+    
+    const subtotal = carrito.reduce((total, item) => {
+        const precio = item.price || 0;
+        const cantidad = item.quantity || 1;
+        return total + (precio * cantidad);
+    }, 0);
+    
+    console.log("   - Subtotal: $", subtotal);
+    return subtotal;
+}
+
+// Validar formulario (usa el carrito real)
+function validateForm() {
+    console.log("🔍 Validando formulario...");
+    
+    // 1. Verificar carrito
+    const carrito = getCarritoActual();
+    console.log("   - Productos en carrito:", carrito.length);
+    
+    if (carrito.length === 0) {
+        console.log("❌ Carrito vacío");
+        alert("❌ Agrega productos al carrito antes de completar el pedido");
+        return false;
+    }
+    
+    console.log("✅ Carrito OK");
+    
+    // 2. Verificar campos mínimos requeridos
+    const campos = [
+        {id: 'customer-name', nombre: 'nombre'},
+        {id: 'customer-phone', nombre: 'WhatsApp'},
+        {id: 'customer-street', nombre: 'calle'},
+        {id: 'customer-number', nombre: 'número'},
+        {id: 'customer-neighborhood', nombre: 'barrio'},
+        {id: 'customer-city', nombre: 'ciudad'}
+    ];
+    
+    let camposValidos = true;
+    let primerCampoVacio = null;
+    
+    for (let campo of campos) {
+        const elemento = document.getElementById(campo.id);
+        if (elemento) {
+            const valor = elemento.value.trim();
+            if (!valor) {
+                console.log(`❌ Campo ${campo.nombre} vacío`);
+                if (!primerCampoVacio) primerCampoVacio = elemento;
+                camposValidos = false;
+                elemento.style.borderColor = '#dc3545';
+            } else {
+                elemento.style.borderColor = '';
+            }
+        }
+    }
+    
+    if (!camposValidos && primerCampoVacio) {
+        primerCampoVacio.focus();
+        alert("❌ Completa todos los campos requeridos");
+        return false;
+    }
+    
+    console.log("✅ Todos los campos están completos");
+    return true;
+}
+
+// Procesar pedido (genera mensaje detallado)
 function processOrder() {
+    console.log("📞 Procesando pedido para WhatsApp...");
+    
+    if (!validateForm()) {
+        console.log("❌ Validación fallida");
+        return;
+    }
+    
     // Obtener datos del formulario
-    const customerName = document.getElementById('customer-name').value.trim();
-    const customerPhone = document.getElementById('customer-phone').value.trim();
-    const customerCity = document.getElementById('customer-city').value.trim();
-    const customerStreet = document.getElementById('customer-street').value.trim();
-    const customerNumber = document.getElementById('customer-number').value.trim();
-    const customerNeighborhood = document.getElementById('customer-neighborhood').value.trim();
-    const orderNotes = document.getElementById('order-notes').value.trim();
+    const nombre = document.getElementById('customer-name').value.trim();
+    const telefono = document.getElementById('customer-phone').value.trim();
+    const ciudad = document.getElementById('customer-city').value.trim();
+    const calle = document.getElementById('customer-street').value.trim();
+    const numero = document.getElementById('customer-number').value.trim();
+    const barrio = document.getElementById('customer-neighborhood').value.trim();
+    const notas = document.getElementById('order-notes')?.value.trim() || '';
     
     // Construir dirección completa
-    const fullAddress = `${customerStreet} ${customerNumber}, ${customerNeighborhood}, ${customerCity}`;
+    const direccion = `${calle} ${numero}, ${barrio}, ${ciudad}`;
     
-    // Obtener adicionales generales seleccionados
-    const generalExtras = [];
-    document.querySelectorAll('.extra-checkbox:checked').forEach(checkbox => {
-        generalExtras.push({
-            name: checkbox.dataset.name,
-            price: parseInt(checkbox.dataset.price)
-        });
-    });
+    // Obtener carrito actual
+    const carrito = getCarritoActual();
     
     // Calcular totales
     const subtotal = calculateSubtotal();
-    const delivery = FORM_CONFIG.defaultDeliveryCost;
-    const extrasTotal = generalExtras.reduce((sum, extra) => sum + extra.price, 0);
-    const total = subtotal + delivery + extrasTotal;
+    const envio = FORM_CONFIG.defaultDeliveryCost;
+    const total = subtotal + envio;
     
-    // Generar mensaje para WhatsApp
-    const whatsappMessage = generateWhatsAppMessage({
-        customerName,
-        customerPhone,
-        address: fullAddress,
-        orderNotes,
-        items: selectedItems,
-        generalExtras,
-        subtotal,
-        delivery,
-        total
-    });
+    // Generar mensaje detallado para WhatsApp
+    let mensaje = `📋 *NUEVO PEDIDO - COMIDAS AMICI*\n\n`;
     
-    // Enviar por WhatsApp
-    const phoneNumber = '5491122334455'; // Reemplazar con el número real del negocio
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    mensaje += `👤 *CLIENTE:* ${nombre}\n`;
+    mensaje += `📱 *WHATSAPP:* ${telefono}\n`;
+    mensaje += `📍 *DIRECCIÓN DE ENTREGA:*\n${direccion}\n`;
     
-    // Abrir en nueva pestaña
-    window.open(whatsappUrl, '_blank');
+    if (notas) {
+        mensaje += `📝 *NOTAS:* ${notas}\n`;
+    }
     
-    // Mostrar confirmación
-    showNotification('¡Pedido listo para enviar por WhatsApp!', 'success');
+    mensaje += `\n🛒 *DETALLE DEL PEDIDO:*\n`;
+    mensaje += `══════════════════════════\n`;
     
-    // Reiniciar carrito después de enviar
-    setTimeout(() => {
-        clearCart();
-    }, 2000);
-}
-
-// Generar mensaje de WhatsApp estructurado
-function generateWhatsAppMessage(orderData) {
-    const timestamp = new Date().toLocaleString('es-AR', {
-        dateStyle: 'short',
-        timeStyle: 'short'
-    });
-    
-    let message = `📋 *NUEVO PEDIDO - COMIDAS AMICI*\n`;
-    message += `📅 ${timestamp}\n\n`;
-    
-    message += `👤 *CLIENTE:* ${orderData.customerName}\n`;
-    message += `📱 *WHATSAPP:* ${orderData.customerPhone}\n`;
-    message += `📍 *DIRECCIÓN DE ENTREGA:*\n${orderData.address}\n\n`;
-    
-    message += `🛒 *DETALLE DEL PEDIDO:*\n`;
-    message += `══════════════════════════\n`;
-    
-    // Productos
-    orderData.items.forEach((item, index) => {
-        const itemTotal = (item.price + 
-            item.sauces.reduce((sum, sauce) => sum + sauce.price, 0) +
-            item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0)) * item.quantity;
+    // Listar productos
+    carrito.forEach((item, index) => {
+        const nombreProducto = item.name || 'Producto';
+        const cantidad = item.quantity || 1;
+        const precio = item.price || 0;
+        const totalItem = precio * cantidad;
         
-        message += `${index + 1}. *${item.name}* x${item.quantity}\n`;
-        message += `   Precio unitario: $${item.price}\n`;
+        mensaje += `${index + 1}. *${nombreProducto}* x${cantidad}\n`;
+        mensaje += `   Precio unitario: $${precio}\n`;
         
-        // Salsas adicionales del producto
-        if (item.sauces.length > 0) {
-            message += `   🧂 Salsas: ${item.sauces.map(s => s.name).join(', ')}\n`;
+        // Mostrar salsas si tiene
+        if (item.sauces && item.sauces.length > 0) {
+            const salsas = item.sauces.map(s => s.name).join(', ');
+            mensaje += `   🧂 Salsas: ${salsas}\n`;
         }
         
-        // Adicionales del producto (solo pizzas)
-        if (item.generalExtras.length > 0) {
+        // Mostrar extras si tiene
+        if (item.generalExtras && item.generalExtras.length > 0) {
             item.generalExtras.forEach(extra => {
-                message += `   ➕ ${extra.name} x${extra.quantity}\n`;
+                mensaje += `   ➕ ${extra.name} x${extra.quantity || 1}\n`;
             });
         }
         
-        // Notas del producto
+        // Mostrar notas del producto
         if (item.notes) {
-            message += `   📝 Notas: ${item.notes}\n`;
+            mensaje += `   📝 Notas: ${item.notes}\n`;
         }
         
-        message += `   Subtotal: $${itemTotal}\n`;
-        message += `   ─────────────────\n`;
+        mensaje += `   Subtotal: $${totalItem}\n`;
+        mensaje += `   ─────────────────\n`;
     });
     
-    // Adicionales generales
-    if (orderData.generalExtras.length > 0) {
-        message += `\n🎁 *ADICIONALES GENERALES:*\n`;
-        orderData.generalExtras.forEach(extra => {
-            message += `• ${extra.name}: $${extra.price}\n`;
+    mensaje += `\n💰 *RESUMEN DE PAGO:*\n`;
+    mensaje += `══════════════════════════\n`;
+    mensaje += `Subtotal productos: $${subtotal}\n`;
+    mensaje += `Costo de envío: $${envio}\n`;
+    mensaje += `*TOTAL A PAGAR: $${total}*\n\n`;
+    
+    mensaje += `⏰ *INFORMACIÓN IMPORTANTE:*\n`;
+    mensaje += `• Tiempo estimado de entrega: 45-60 minutos\n`;
+    mensaje += `• Aceptamos efectivo, transferencia y Mercado Pago\n`;
+    mensaje += `• Para cambios o cancelaciones, contactar dentro de los 10 minutos\n\n`;
+    
+    mensaje += `¡Gracias por tu pedido! 🍕`;
+    
+    console.log("📝 Mensaje generado (primeras 300 caracteres):");
+    console.log(mensaje.substring(0, 300) + "...");
+    
+    // Enviar por WhatsApp
+    const telefonoNegocio = '5493541682310';
+    const mensajeCodificado = encodeURIComponent(mensaje);
+    const urlWhatsApp = `https://wa.me/${telefonoNegocio}?text=${mensajeCodificado}`;
+    
+    console.log("📤 Abriendo WhatsApp...");
+    window.open(urlWhatsApp, '_blank');
+    
+    // Mostrar confirmación
+    if (typeof showNotification === 'function') {
+        showNotification('¡Pedido listo para enviar por WhatsApp!', 'success');
+    } else {
+        alert('✅ Pedido listo. Se abrirá WhatsApp en un momento...');
+    }
+}
+
+// ============================================
+// INICIALIZACIÓN
+// ============================================
+
+function initForm() {
+    console.log("🔄 Inicializando sistema de pedidos...");
+    
+    // Configurar mapa
+    setupMap();
+    
+    // Configurar evento del formulario
+    const formulario = document.getElementById('order-form');
+    if (formulario) {
+        formulario.addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log("📋 Formulario enviado");
+            processOrder();
         });
+        console.log("✅ Formulario configurado");
+    } else {
+        console.error("❌ No se encontró #order-form");
     }
     
-    // Notas adicionales del pedido
-    if (orderData.orderNotes) {
-        message += `\n📝 *NOTAS ADICIONALES:*\n`;
-        message += `${orderData.orderNotes}\n`;
-    }
-    
-    // Totales
-    message += `\n💰 *RESUMEN DE PAGO:*\n`;
-    message += `══════════════════════════\n`;
-    message += `Subtotal productos: $${orderData.subtotal}\n`;
-    
-    if (orderData.generalExtras.length > 0) {
-        const extrasTotal = orderData.generalExtras.reduce((sum, extra) => sum + extra.price, 0);
-        message += `Adicionales generales: $${extrasTotal}\n`;
-    }
-    
-    message += `Costo de envío: $${orderData.delivery}\n`;
-    message += `*TOTAL A PAGAR: $${orderData.total}*\n\n`;
-    
-    message += `⏰ *INFORMACIÓN IMPORTANTE:*\n`;
-    message += `• El tiempo estimado de entrega es de 45-60 minutos\n`;
-    message += `• Aceptamos efectivo, transferencia y Mercado Pago\n`;
-    message += `• Para cambios o cancelaciones, contactar dentro de los 10 minutos\n\n`;
-    
-    message += `¡Gracias por tu pedido! 🍕`;
-    
-    return message;
+    // Mostrar estado actual del carrito
+    const carrito = getCarritoActual();
+    console.log("📦 Estado del carrito:", carrito.length, "productos");
+    console.log("💰 Subtotal actual: $", calculateSubtotal());
 }
 
-// Calcular subtotal del carrito
-function calculateSubtotal() {
-    return selectedItems.reduce((total, item) => {
-        const itemPrice = item.price;
-        const saucesTotal = item.sauces.reduce((sum, sauce) => sum + sauce.price, 0);
-        const extrasTotal = item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0);
-        return total + (itemPrice + saucesTotal + extrasTotal) * item.quantity;
-    }, 0);
-}
+// ============================================
+// HACER FUNCIONES GLOBALES
+// ============================================
 
-// Vaciar carrito
-function clearCart() {
-    selectedItems = [];
-    renderSelectedItems();
-    renderFoodItems();
-    updateOrderSummary();
-    saveToLocalStorage();
-    
-    // Actualizar botón flotante
-    const floatCount = document.getElementById('float-count');
-    const floatTotal = document.getElementById('float-total');
-    if (floatCount) floatCount.textContent = '0';
-    if (floatTotal) floatTotal.textContent = '$0';
-}
-
-// Exportar funciones para uso global
-window.initFormAndMap = initFormAndMap;
+// Exportar funciones principales
+window.calculateSubtotal = calculateSubtotal;
 window.validateForm = validateForm;
 window.processOrder = processOrder;
+window.getCarritoActual = getCarritoActual;
+
+// Sincronizar selectedItems con el sistema global
+if (typeof selectedItems !== 'undefined') {
+    window.selectedItems = selectedItems;
+}
+
+// ============================================
+// AUTO-INICIALIZACIÓN
+// ============================================
+
+// Inicializar cuando el DOM esté listo
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initForm);
+} else {
+    // Si ya está cargado, inicializar con un pequeño delay
+    setTimeout(initForm, 100);
+}
+
+console.log("✅ Sistema de pedidos listo");
+console.log("📊 Carrito detectado:", getCarritoActual().length, "productos");
