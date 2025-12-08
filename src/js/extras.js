@@ -1,11 +1,11 @@
-
-
 function generateExtrasHTML(item) {
     let html = '';
     
     const showSauces = ['hamburguesa', 'sandwich', 'papas'].includes(item.category);
     const showGeneralExtras = item.category === 'pizza';
     const showNotes = true;
+    
+    const requiresFlavors = item.category === 'empanadas' && (item.name.includes('1/2 Docena') || item.name.includes('Unidad'));
     
     let buttonText = '';
     let buttonIcon = '';
@@ -16,6 +16,9 @@ function generateExtrasHTML(item) {
     } else if (showSauces) {
         buttonText = 'Agregar Salsas';
         buttonIcon = 'fa-wine-bottle';
+    } else if (requiresFlavors) {
+        buttonText = 'Elegir Sabores *';
+        buttonIcon = 'fa-utensils';
     } else if (showNotes) {
         buttonText = 'Agregar Notas';
         buttonIcon = 'fa-sticky-note';
@@ -211,14 +214,18 @@ function generateExtrasHTML(item) {
         }
         
         if (showNotes) {
+            const labelText = requiresFlavors ? 'Elegir sabores (Requerido) *' : 'Notas específicas:';
+            const placeholderText = requiresFlavors ? 'Ej: 3 de carne dulce, 3 de jamón y queso...' : 'Ej: Sin orégano, bien cocida, sin cebolla...';
+            const labelIcon = requiresFlavors ? 'fa-utensils' : 'fa-sticky-note';
+
             html += `
                 <div class="product-notes-container">
-                    <label class="product-notes-label">
-                        <i class="fas fa-sticky-note"></i>
-                        Notas específicas:
+                    <label class="product-notes-label" style="${requiresFlavors ? 'color: #d32f2f; font-weight: 700;' : ''}">
+                        <i class="fas ${labelIcon}"></i>
+                        ${labelText}
                     </label>
                     <textarea id="product-notes-${item.id}" class="product-notes-input" 
-                              placeholder="Ej: Sin orégano, bien cocida, sin cebolla..." 
+                              placeholder="${placeholderText}" 
                               rows="2"></textarea>
                 </div>
             `;
@@ -233,7 +240,16 @@ function generateExtrasHTML(item) {
 function setupExtrasEventListeners(productId) {
     const toggleBtn = document.querySelector(`.extras-toggle-btn[data-product-id="${productId}"]`);
     const extrasContainer = document.getElementById(`extras-container-${productId}`);
+    const notesInput = document.getElementById(`product-notes-${productId}`);
     
+    if (notesInput) {
+        notesInput.addEventListener('input', function() {
+            if (this.value.trim() !== '') {
+                this.style.borderColor = '';
+            }
+        });
+    }
+
     if (toggleBtn && extrasContainer) {
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -319,6 +335,32 @@ function addToCart(id) {
     const notesInput = document.getElementById(`product-notes-${id}`);
     const productNotes = notesInput ? notesInput.value.trim() : '';
     
+    const requiresFlavors = foodItem.category === 'empanadas' && (foodItem.name.includes('1/2 Docena') || foodItem.name.includes('Unidad'));
+
+    if (requiresFlavors && !productNotes) {
+        showNotification('⚠️ Debes especificar los sabores de las empanadas', 'error');
+        
+        if (notesInput) {
+            notesInput.style.borderColor = '#ff4757';
+            
+            const toggleBtn = document.querySelector(`.extras-toggle-btn[data-product-id="${id}"]`);
+            const extrasContainer = document.getElementById(`extras-container-${id}`);
+            
+            if (toggleBtn && extrasContainer && !toggleBtn.classList.contains('expanded')) {
+                document.querySelectorAll('.extras-toggle-btn').forEach(btn => btn.classList.remove('expanded'));
+                document.querySelectorAll('.extras-container').forEach(con => con.classList.remove('expanded'));
+                
+                toggleBtn.classList.add('expanded');
+                extrasContainer.classList.add('expanded');
+            }
+            
+            setTimeout(() => {
+                notesInput.focus();
+            }, 300);
+        }
+        return;
+    }
+
     const existingItemIndex = selectedItems.findIndex(item => 
         item.id === id && 
         JSON.stringify(item.sauces) === JSON.stringify(selectedSauces) &&
@@ -366,7 +408,10 @@ function resetProductControls(productId) {
     });
     
     const notesInput = document.getElementById(`product-notes-${productId}`);
-    if (notesInput) notesInput.value = '';
+    if (notesInput) {
+        notesInput.value = '';
+        notesInput.style.borderColor = '';
+    }
     
     const toggleBtn = document.querySelector(`.extras-toggle-btn[data-product-id="${productId}"]`);
     const extrasContainer = document.getElementById(`extras-container-${productId}`);

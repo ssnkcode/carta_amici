@@ -1,6 +1,7 @@
 const FORM_CONFIG = {
     phonePattern: /^[0-9]{10,15}$/,
     defaultDeliveryCost: 300,
+    whatsappNumber: '5493541682310',
     businessLocation: {
         address: "Av. Roque Sáenz Peña, Córdoba Capital, Córdoba", 
         lat: -31.307277,  
@@ -8,21 +9,6 @@ const FORM_CONFIG = {
         zoom: 16 
     }
 };
-
-console.log("✅ form.js cargado");
-
-console.log("🔗 Conectando con el carrito real...");
-
-if (typeof selectedItems !== 'undefined') {
-    console.log("✓ Carrito encontrado en variable global 'selectedItems'");
-    console.log("  - Productos:", selectedItems.length);
-    console.log("  - Detalles:", selectedItems.map(p => `${p.name} x${p.quantity}`));
-    
-    window.selectedItems = selectedItems;
-} else {
-    console.warn("⚠️ Variable selectedItems no encontrada");
-    window.selectedItems = [];
-}
 
 function getCarritoActual() {
     if (typeof selectedItems !== 'undefined' && Array.isArray(selectedItems)) {
@@ -33,25 +19,17 @@ function getCarritoActual() {
     }
     try {
         const saved = localStorage.getItem('deliciasExpress_selectedItems');
-        if (saved) {
-            return JSON.parse(saved);
-        }
+        if (saved) return JSON.parse(saved);
     } catch(e) {}
     
     return [];
 }
 
 function setupMap() {
-    console.log("🗺️ Configurando mapa...");
-    
     const mapFrame = document.getElementById('map-frame');
-    if (!mapFrame) {
-        console.error("❌ #map-frame no encontrado");
-        return;
-    }
+    if (!mapFrame) return;
     
-    const lat = FORM_CONFIG.businessLocation.lat;
-    const lng = FORM_CONFIG.businessLocation.lng;
+    const { lat, lng, address } = FORM_CONFIG.businessLocation;
     const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.003},${lat-0.003},${lng+0.003},${lat+0.003}&layer=mapnik&marker=${lat},${lng}`;
     
     mapFrame.innerHTML = `
@@ -62,209 +40,234 @@ function setupMap() {
             style="border:none;"
             allowfullscreen
             loading="lazy"
-            title="Comidas AMICI - ${FORM_CONFIG.businessLocation.address}">
+            title="Ubicación - ${address}">
         </iframe>
     `;
-    
-    console.log("✅ Mapa configurado");
-}
-
-function calculateSubtotal() {
-    const carrito = getCarritoActual();
-    console.log("🧮 Calculando subtotal de", carrito.length, "productos...");
-    
-    const subtotal = carrito.reduce((total, item) => {
-        const precio = item.price || 0;
-        const cantidad = item.quantity || 1;
-        return total + (precio * cantidad);
-    }, 0);
-    
-    console.log("   - Subtotal: $", subtotal);
-    return subtotal;
 }
 
 function validateForm() {
-    console.log("🔍 Validando formulario...");
-    
     const carrito = getCarritoActual();
-    console.log("   - Productos en carrito:", carrito.length);
     
     if (carrito.length === 0) {
-        console.log("❌ Carrito vacío");
-        alert("❌ Agrega productos al carrito antes de completar el pedido");
+        if (typeof showNotification === 'function') {
+            showNotification('Tu carrito está vacío', 'error');
+        } else {
+            alert('Tu carrito está vacío');
+        }
+        const cartSection = document.getElementById('food-grid');
+        if(cartSection) cartSection.scrollIntoView({ behavior: 'smooth' });
         return false;
     }
     
-    console.log("✅ Carrito OK");
-    
-    const campos = [
-        {id: 'customer-name', nombre: 'nombre'},
-        {id: 'customer-phone', nombre: 'WhatsApp'},
-        {id: 'customer-street', nombre: 'calle'},
-        {id: 'customer-number', nombre: 'número'},
-        {id: 'customer-neighborhood', nombre: 'barrio'},
-        {id: 'customer-city', nombre: 'ciudad'}
+    const requiredFields = [
+        {id: 'customer-name'},
+        {id: 'customer-phone'},
+        {id: 'customer-city'},
+        {id: 'customer-street'},
+        {id: 'customer-number'},
+        {id: 'customer-neighborhood'}
     ];
     
-    let camposValidos = true;
-    let primerCampoVacio = null;
+    let isValid = true;
+    let firstErrorField = null;
     
-    for (let campo of campos) {
-        const elemento = document.getElementById(campo.id);
-        if (elemento) {
-            const valor = elemento.value.trim();
-            if (!valor) {
-                console.log(`❌ Campo ${campo.nombre} vacío`);
-                if (!primerCampoVacio) primerCampoVacio = elemento;
-                camposValidos = false;
-                elemento.style.borderColor = '#dc3545';
+    for (let field of requiredFields) {
+        const el = document.getElementById(field.id);
+        if (el) {
+            if (!el.value.trim()) {
+                el.style.borderColor = '#ff4757';
+                if (!firstErrorField) firstErrorField = el;
+                isValid = false;
             } else {
-                elemento.style.borderColor = '';
+                el.style.borderColor = '#2ecc71';
             }
         }
     }
+
+    const paymentMethod = document.querySelector('input[name="payment-method"]:checked');
+    const paymentContainer = document.querySelector('.payment-options');
     
-    if (!camposValidos && primerCampoVacio) {
-        primerCampoVacio.focus();
-        alert("❌ Completa todos los campos requeridos");
+    if (!paymentMethod) {
+        if(paymentContainer) paymentContainer.style.border = '1px solid #ff4757';
+        isValid = false;
+        if (!firstErrorField && paymentContainer) firstErrorField = paymentContainer;
+    } else {
+        if(paymentContainer) paymentContainer.style.border = 'none';
+    }
+    
+    if (!isValid && firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorField.focus();
+        if (typeof showNotification === 'function') {
+            showNotification('Completa los campos obligatorios', 'error');
+        }
         return false;
     }
     
-    console.log("✅ Todos los campos están completos");
     return true;
 }
 
 function processOrder() {
-    console.log("📞 Procesando pedido para WhatsApp...");
-    
-    if (!validateForm()) {
-        console.log("❌ Validación fallida");
-        return;
-    }
-    
-    const nombre = document.getElementById('customer-name').value.trim();
-    const telefono = document.getElementById('customer-phone').value.trim();
-    const ciudad = document.getElementById('customer-city').value.trim();
-    const calle = document.getElementById('customer-street').value.trim();
-    const numero = document.getElementById('customer-number').value.trim();
-    const barrio = document.getElementById('customer-neighborhood').value.trim();
-    const notas = document.getElementById('order-notes')?.value.trim() || '';
-    
-    const direccion = `${calle} ${numero}, ${barrio}, ${ciudad}`;
-    
-    const carrito = getCarritoActual();
-    
-    const subtotal = calculateSubtotal();
-    const envio = FORM_CONFIG.defaultDeliveryCost;
-    const total = subtotal + envio;
-    
-    let mensaje = `📋 *NUEVO PEDIDO - COMIDAS AMICI*\n\n`;
-    
-    mensaje += `👤 *CLIENTE:* ${nombre}\n`;
-    mensaje += `📱 *WHATSAPP:* ${telefono}\n`;
-    mensaje += `📍 *DIRECCIÓN DE ENTREGA:*\n${direccion}\n`;
-    
-    if (notas) {
-        mensaje += `📝 *NOTAS:* ${notas}\n`;
-    }
-    
-    mensaje += `\n🛒 *DETALLE DEL PEDIDO:*\n`;
-    mensaje += `══════════════════════════\n`;
-    
-    carrito.forEach((item, index) => {
-        const nombreProducto = item.name || 'Producto';
-        const cantidad = item.quantity || 1;
-        const precio = item.price || 0;
-        const totalItem = precio * cantidad;
+    if (!validateForm()) return;
+
+    const submitBtn = document.querySelector('.submit-btn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    submitBtn.disabled = true;
+
+    try {
+        const data = {
+            name: document.getElementById('customer-name').value.trim(),
+            phone: document.getElementById('customer-phone').value.trim(),
+            city: document.getElementById('customer-city').value.trim(),
+            street: document.getElementById('customer-street').value.trim(),
+            number: document.getElementById('customer-number').value.trim(),
+            neighborhood: document.getElementById('customer-neighborhood').value.trim(),
+            notes: document.getElementById('order-notes')?.value.trim() || '',
+            payment: document.querySelector('input[name="payment-method"]:checked').value
+        };
+
+        const direccionCompleta = `${data.street} ${data.number}, ${data.neighborhood}, ${data.city}`;
+        const carrito = getCarritoActual();
+
+        const subtotal = carrito.reduce((total, item) => {
+            const saucesTotal = item.sauces ? item.sauces.reduce((s, sauce) => s + sauce.price, 0) : 0;
+            const extrasTotal = item.generalExtras ? item.generalExtras.reduce((s, extra) => s + (extra.price * extra.quantity), 0) : 0;
+            return total + ((item.price * item.quantity) + saucesTotal + extrasTotal);
+        }, 0);
+
+        const globalExtras = Array.from(document.querySelectorAll('.extra-checkbox:checked'))
+            .reduce((total, checkbox) => total + parseInt(checkbox.dataset.price || 0), 0);
+
+        const envio = FORM_CONFIG.defaultDeliveryCost;
+        let total = subtotal + globalExtras + envio;
+        let discount = 0;
+
+        if (data.payment === 'efectivo') {
+            discount = Math.round(total * 0.10);
+            total = total - discount;
+        }
+
+        const EMOJIS = {
+            pizza: '\uD83C\uDF55',
+            user: '\uD83D\uDC64',
+            phone: '\uD83D\uDCF1',
+            pin: '\uD83D\uDCCD',
+            note: '\uD83D\uDCDD',
+            cart: '\uD83D\uDED2',
+            bullet: '\u25AA',
+            arrow: '\u21AA',
+            box: '\uD83D\uDCE6',
+            card: '\uD83D\uDCB3',
+            bill: '\uD83E\uDDFE',
+            moto: '\uD83D\uDEF5',
+            party: '\uD83C\uDF89',
+            check: '\u2705'
+        };
+
+        let msg = `*HOLA, QUIERO REALIZAR UN PEDIDO* ${EMOJIS.pizza}\n\n`;
         
-        mensaje += `${index + 1}. *${nombreProducto}* x${cantidad}\n`;
-        mensaje += `   Precio unitario: $${precio}\n`;
+        msg += `${EMOJIS.user} *Cliente:* ${data.name}\n`;
+        msg += `${EMOJIS.phone} *Tel:* ${data.phone}\n`;
+        msg += `${EMOJIS.pin} *Dirección:* ${direccionCompleta}\n`;
         
-        if (item.sauces && item.sauces.length > 0) {
-            const salsas = item.sauces.map(s => s.name).join(', ');
-            mensaje += `   🧂 Salsas: ${salsas}\n`;
+        if (data.notes) {
+            msg += `${EMOJIS.note} *Nota a cocina:* ${data.notes}\n`;
         }
         
-        if (item.generalExtras && item.generalExtras.length > 0) {
-            item.generalExtras.forEach(extra => {
-                mensaje += `   ➕ ${extra.name} x${extra.quantity || 1}\n`;
-            });
+        msg += `\n--------------------------------\n`;
+        msg += `${EMOJIS.cart} *DETALLE DEL PEDIDO:*\n`;
+        
+        carrito.forEach((item) => {
+            msg += `\n${EMOJIS.bullet} *${item.quantity}x ${item.name}*`;
+            
+            const isEmpanada = item.category === 'empanadas';
+            if (item.notes) {
+                msg += `\n   ${EMOJIS.arrow} ${isEmpanada ? 'Sabores' : 'Nota'}: ${item.notes}`;
+            }
+
+            if (item.sauces && item.sauces.length > 0) {
+                const salsaNames = item.sauces.map(s => s.name).join(', ');
+                msg += `\n   + Salsas: ${salsaNames}`;
+            }
+
+            if (item.generalExtras && item.generalExtras.length > 0) {
+                item.generalExtras.forEach(extra => {
+                    msg += `\n   + ${extra.quantity}x ${extra.name}`;
+                });
+            }
+            msg += `\n`;
+        });
+
+        const selectedGlobalExtras = Array.from(document.querySelectorAll('.extra-checkbox:checked'));
+        if(selectedGlobalExtras.length > 0) {
+             msg += `\n${EMOJIS.box} *ADICIONALES:*\n`;
+             selectedGlobalExtras.forEach(ex => {
+                 msg += `   • ${ex.dataset.name}\n`;
+             });
+        }
+
+        msg += `\n--------------------------------\n`;
+        msg += `💰 *RESUMEN DE PAGO:*\n`;
+        
+        const paymentLabel = data.payment.charAt(0).toUpperCase() + data.payment.slice(1);
+        
+        msg += `${EMOJIS.card} Pago: *${paymentLabel}*\n`;
+        msg += `${EMOJIS.bill} Subtotal: $${subtotal + globalExtras}\n`;
+        msg += `${EMOJIS.moto} Envío: $${envio}\n`;
+        
+        if (discount > 0) {
+            msg += `${EMOJIS.party} Descuento (10%): -$${discount}\n`;
         }
         
-        if (item.notes) {
-            mensaje += `   📝 Notas: ${item.notes}\n`;
-        }
+        msg += `\n${EMOJIS.check} *TOTAL A PAGAR: $${total}*`;
         
-        mensaje += `   Subtotal: $${totalItem}\n`;
-        mensaje += `   ─────────────────\n`;
-    });
-    
-    mensaje += `\n💰 *RESUMEN DE PAGO:*\n`;
-    mensaje += `══════════════════════════\n`;
-    mensaje += `Subtotal productos: $${subtotal}\n`;
-    mensaje += `Costo de envío: $${envio}\n`;
-    mensaje += `*TOTAL A PAGAR: $${total}*\n\n`;
-    
-    mensaje += `⏰ *INFORMACIÓN IMPORTANTE:*\n`;
-    mensaje += `• Tiempo estimado de entrega: 45-60 minutos\n`;
-    mensaje += `• Aceptamos efectivo, transferencia y Mercado Pago\n`;
-    mensaje += `• Para cambios o cancelaciones, contactar dentro de los 10 minutos\n\n`;
-    
-    mensaje += `¡Gracias por tu pedido! 🍕`;
-    
-    console.log("📝 Mensaje generado (primeras 300 caracteres):");
-    console.log(mensaje.substring(0, 300) + "...");
-    
-    const telefonoNegocio = '5493541682310';
-    const mensajeCodificado = encodeURIComponent(mensaje);
-    const urlWhatsApp = `https://wa.me/${telefonoNegocio}?text=${mensajeCodificado}`;
-    
-    console.log("📤 Abriendo WhatsApp...");
-    window.open(urlWhatsApp, '_blank');
-    
-    if (typeof showNotification === 'function') {
-        showNotification('¡Pedido listo para enviar por WhatsApp!', 'success');
-    } else {
-        alert('✅ Pedido listo. Se abrirá WhatsApp en un momento...');
+        const url = `https://wa.me/${FORM_CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+        
+        setTimeout(() => {
+            window.open(url, '_blank');
+            submitBtn.innerHTML = '<i class="fas fa-check"></i> ¡Enviado!';
+            submitBtn.style.background = '#2ecc71';
+            
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                submitBtn.style.background = '';
+            }, 3000);
+        }, 800);
+
+    } catch (error) {
+        console.error(error);
+        alert("Error al procesar. Intenta de nuevo.");
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
 }
 
 function initForm() {
-    console.log("🔄 Inicializando sistema de pedidos...");
-    
     setupMap();
     
-    const formulario = document.getElementById('order-form');
-    if (formulario) {
-        formulario.addEventListener('submit', function(e) {
+    const form = document.getElementById('order-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
             e.preventDefault();
-            console.log("📋 Formulario enviado");
             processOrder();
         });
-        console.log("✅ Formulario configurado");
-    } else {
-        console.error("❌ No se encontró #order-form");
     }
-    
-    const carrito = getCarritoActual();
-    console.log("📦 Estado del carrito:", carrito.length, "productos");
-    console.log("💰 Subtotal actual: $", calculateSubtotal());
+
+    const phoneInput = document.getElementById('customer-phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    }
 }
 
-window.calculateSubtotal = calculateSubtotal;
-window.validateForm = validateForm;
 window.processOrder = processOrder;
-window.getCarritoActual = getCarritoActual;
-
-if (typeof selectedItems !== 'undefined') {
-    window.selectedItems = selectedItems;
-}
+window.validateForm = validateForm;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initForm);
 } else {
-    setTimeout(initForm, 100);
+    initForm();
 }
-
-console.log("✅ Sistema de pedidos listo");
-console.log("📊 Carrito detectado:", getCarritoActual().length, "productos");
