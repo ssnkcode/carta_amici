@@ -1,4 +1,3 @@
-// main.js - Funciones principales del sistema
 let foodItems = [];
 let selectedItems = [];
 let currentCategory = "todos";
@@ -82,7 +81,6 @@ function renderFoodItems() {
         foodItem.className = `food-item ${inCart ? 'in-cart' : ''}`;
         foodItem.dataset.id = item.id;
         
-        // Generar HTML para controles de extras
         const extrasHTML = generateExtrasHTML(item);
         
         foodItem.innerHTML = `
@@ -111,7 +109,6 @@ function renderFoodItems() {
         
         foodGrid.appendChild(foodItem);
         
-        // Agregar event listeners para los nuevos controles
         setTimeout(() => {
             setupExtrasEventListeners(item.id);
         }, 100);
@@ -149,7 +146,6 @@ function renderSelectedItems() {
     let itemsHTML = '';
     
     selectedItems.forEach((item, index) => {
-        // Calcular subtotal de extras
         const saucesTotal = item.sauces ? item.sauces.reduce((sum, sauce) => sum + sauce.price, 0) : 0;
         const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) : 0;
         const extrasTotal = saucesTotal + generalExtrasTotal;
@@ -265,7 +261,6 @@ function confirmClearCart() {
 }
 
 function updateOrderSummary() {
-    // Calcular subtotal de productos con sus extras
     const foodSubtotal = selectedItems.reduce((total, item) => {
         const saucesTotal = item.sauces ? item.sauces.reduce((sum, sauce) => sum + sauce.price, 0) : 0;
         const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) : 0;
@@ -273,7 +268,6 @@ function updateOrderSummary() {
         return total + itemTotal;
     }, 0);
     
-    // Calcular subtotal de extras globales (los que ya estaban)
     const globalExtrasSubtotal = Array.from(document.querySelectorAll('.extra-checkbox:checked'))
         .reduce((total, checkbox) => {
             return total + parseInt(checkbox.dataset.price || 0);
@@ -281,7 +275,22 @@ function updateOrderSummary() {
     
     const subtotal = foodSubtotal + globalExtrasSubtotal;
     const deliveryCost = 300;
-    const total = subtotal + deliveryCost;
+    let total = subtotal + deliveryCost;
+    
+    const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
+    const discountRow = document.getElementById('discount-row');
+    const discountAmountElem = document.getElementById('discount-amount');
+    
+    if (paymentMethod === 'efectivo') {
+        const discount = Math.round(total * 0.10);
+        total = total - discount;
+        if(discountRow && discountAmountElem) {
+            discountRow.style.display = 'flex';
+            discountAmountElem.textContent = `-$${discount}`;
+        }
+    } else {
+        if(discountRow) discountRow.style.display = 'none';
+    }
     
     const subtotalElement = document.getElementById('subtotal');
     const deliveryElement = document.getElementById('delivery-cost');
@@ -291,7 +300,6 @@ function updateOrderSummary() {
     if (deliveryElement) deliveryElement.textContent = `$${deliveryCost}`;
     if (totalElement) totalElement.textContent = `$${total}`;
 
-    // Update Floating Button
     const floatBtn = document.getElementById('floating-cart-btn');
     const floatCount = document.getElementById('float-count');
     const floatTotal = document.getElementById('float-total');
@@ -329,11 +337,17 @@ function setupEventListeners() {
         });
     });
     
+    document.querySelectorAll('input[name="payment-method"]').forEach(radio => {
+        radio.addEventListener('change', updateOrderSummary);
+    });
+    
     const orderForm = document.getElementById('order-form');
     if (orderForm) {
         orderForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            sendOrderViaWhatsApp();
+            if (typeof processOrder === 'function') {
+                processOrder();
+            }
         });
     }
     
@@ -370,7 +384,6 @@ function setupEventListeners() {
         });
     }
 
-    // Floating Button Logic
     const floatingBtn = document.getElementById('floating-cart-btn');
     if(floatingBtn) {
         floatingBtn.addEventListener('click', function() {
@@ -379,174 +392,6 @@ function setupEventListeners() {
                 cartSection.scrollIntoView({ behavior: 'smooth' });
             }
         });
-    }
-}
-
-function sendOrderViaWhatsApp() {
-    const nameInput = document.getElementById('customer-name');
-    const phoneInput = document.getElementById('customer-phone');
-    const addressInput = document.getElementById('customer-address');
-    const notesInput = document.getElementById('order-notes');
-    
-    if (!nameInput || !phoneInput || !addressInput) {
-        showNotification('Error: formulario no encontrado', 'error');
-        return;
-    }
-    
-    const name = nameInput.value.trim();
-    const phone = phoneInput.value.trim();
-    const address = addressInput.value.trim();
-    const notes = notesInput ? notesInput.value.trim() : '';
-    
-    if (!name) {
-        showNotification('Por favor, ingresa tu nombre', 'error');
-        nameInput.focus();
-        return;
-    }
-    
-    if (!phone || phone.length < 8) {
-        showNotification('Por favor, ingresa un número de WhatsApp válido', 'error');
-        phoneInput.focus();
-        return;
-    }
-    
-    if (!address) {
-        showNotification('Por favor, ingresa tu dirección de entrega', 'error');
-        addressInput.focus();
-        return;
-    }
-    
-    if (selectedItems.length === 0) {
-        showNotification('Por favor, selecciona al menos un producto', 'error');
-        return;
-    }
-    
-    const selectedExtras = Array.from(document.querySelectorAll('.extra-checkbox:checked'))
-        .map(checkbox => ({
-            name: checkbox.dataset.name || 'Adicional',
-            price: parseInt(checkbox.dataset.price || 0)
-        }));
-    
-    // Calcular subtotal incluyendo extras de productos
-    const foodSubtotal = selectedItems.reduce((total, item) => {
-        const saucesTotal = item.sauces ? item.sauces.reduce((sum, sauce) => sum + sauce.price, 0) : 0;
-        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) : 0;
-        const itemTotal = (item.price * item.quantity) + saucesTotal + generalExtrasTotal;
-        return total + itemTotal;
-    }, 0);
-    
-    const extraSubtotal = selectedExtras.reduce((total, extra) => total + extra.price, 0);
-    const subtotal = foodSubtotal + extraSubtotal;
-    const deliveryCost = 300;
-    const total = subtotal + deliveryCost;
-    
-    let message = `*NUEVO PEDIDO - Comidas AMICI*%0A%0A`;
-    message += `*Cliente:* ${name}%0A`;
-    message += `*Teléfono:* ${phone}%0A`;
-    message += `*Dirección:* ${address}%0A`;
-    message += `%0A*PEDIDO:*%0A`;
-    
-    selectedItems.forEach(item => {
-        // Calcular total del item con extras
-        const saucesTotal = item.sauces ? item.sauces.reduce((sum, sauce) => sum + sauce.price, 0) : 0;
-        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, extra) => sum + (extra.price * extra.quantity), 0) : 0;
-        const itemTotal = (item.price * item.quantity) + saucesTotal + generalExtrasTotal;
-        
-        message += `➡ *${item.name}* x${item.quantity} - $${itemTotal}%0A`;
-        
-        // Agregar salsas
-        if (item.sauces && item.sauces.length > 0) {
-            item.sauces.forEach(sauce => {
-                message += `   🍯 ${sauce.name} (+$${sauce.price})%0A`;
-            });
-        }
-        
-        // Agregar adicionales generales
-        if (item.generalExtras && item.generalExtras.length > 0) {
-            item.generalExtras.forEach(extra => {
-                message += `   ➕ ${extra.name} x${extra.quantity} (+$${extra.price * extra.quantity})%0A`;
-            });
-        }
-        
-        // Agregar notas del producto
-        if (item.notes) {
-            message += `   📝 *Nota:* ${item.notes}%0A`;
-        }
-    });
-    
-    if (selectedExtras.length > 0) {
-        message += `%0A*Adicionales generales:*%0A`;
-        selectedExtras.forEach(extra => {
-            message += `➡ ${extra.name} - $${extra.price}%0A`;
-        });
-    }
-    
-    if (notes !== '') {
-        message += `%0A*Notas adicionales:*%0A${notes}%0A`;
-    }
-    
-    message += `%0A*RESUMEN DE PAGO:*%0A`;
-    message += `Subtotal: $${subtotal}%0A`;
-    message += `Costo de envío: $${deliveryCost}%0A`;
-    message += `*TOTAL: $${total}*%0A%0A`;
-    message += `*¡Gracias por tu pedido!*`;
-    
-    const phoneNumber = "5493541682310"; 
-    
-    const whatsappURL = `https://wa.me/${phoneNumber}?text=${message}`;
-    
-    const newWindow = window.open(whatsappURL, '_blank');
-    
-    if (newWindow) {
-        showNotification('Pedido enviado por WhatsApp ✓', 'success');
-        
-        setTimeout(() => {
-            if (document.getElementById('order-form')) {
-                document.getElementById('order-form').reset();
-            }
-            
-            selectedItems = [];
-            renderFoodItems();
-            renderSelectedItems();
-            updateOrderSummary();
-            saveToLocalStorage();
-            
-            document.querySelectorAll('.extra-checkbox').forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            
-            // También limpiar los extras específicos de productos
-            document.querySelectorAll('.sauce-checkbox').forEach(checkbox => {
-                checkbox.checked = false;
-                checkbox.parentElement.classList.remove('selected');
-            });
-            
-            document.querySelectorAll('.general-extra-checkbox').forEach(checkbox => {
-                checkbox.checked = false;
-                checkbox.parentElement.classList.remove('selected');
-            });
-            
-            document.querySelectorAll('.extra-qty-input').forEach(input => {
-                input.value = 1;
-            });
-            
-            document.querySelectorAll('.product-notes-input').forEach(textarea => {
-                textarea.value = '';
-            });
-            
-            // Cerrar todos los botones de extras
-            document.querySelectorAll('.extras-toggle-btn').forEach(btn => {
-                btn.classList.remove('expanded');
-            });
-            
-            document.querySelectorAll('.extras-container').forEach(container => {
-                container.classList.remove('expanded');
-            });
-            
-            showNotification('Formulario reiniciado. ¡Gracias por tu pedido!', 'success');
-        }, 2000);
-    } else {
-        showNotification('Error al abrir WhatsApp. Por favor, habilita las ventanas emergentes.', 'error');
     }
 }
 
@@ -575,11 +420,3 @@ document.addEventListener('touchmove', function(e) {
         e.preventDefault();
     }
 }, {passive: false});
-
-// Inicializar formulario y mapa cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-    // Si el archivo form.js está cargado, inicializar
-    if (typeof initFormAndMap === 'function') {
-        initFormAndMap();
-    }
-});

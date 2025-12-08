@@ -1,15 +1,12 @@
-// extras.js - Funciones específicas para adicionales
 
-// Función para generar HTML de extras según categoría
+
 function generateExtrasHTML(item) {
     let html = '';
     
-    // Determinar qué extras mostrar según la categoría
     const showSauces = ['hamburguesa', 'sandwich', 'papas'].includes(item.category);
-    const showGeneralExtras = item.category === 'pizza'; // Solo pizzas
-    const showNotes = true; // Todas las categorías tienen notas
+    const showGeneralExtras = item.category === 'pizza';
+    const showNotes = true;
     
-    // Texto del botón según lo que se mostrará
     let buttonText = '';
     let buttonIcon = '';
     
@@ -24,7 +21,6 @@ function generateExtrasHTML(item) {
         buttonIcon = 'fa-sticky-note';
     }
     
-    // Solo mostrar botón si hay algo que mostrar
     if (showSauces || showGeneralExtras || showNotes) {
         html += `
             <button type="button" class="extras-toggle-btn" data-product-id="${item.id}">
@@ -37,7 +33,6 @@ function generateExtrasHTML(item) {
             <div class="extras-container" id="extras-container-${item.id}">
         `;
         
-        // Mostrar salsas para categorías específicas
         if (showSauces) {
             html += `
                 <div class="sauces-section">
@@ -83,7 +78,6 @@ function generateExtrasHTML(item) {
             `;
         }
         
-        // Mostrar adicionales generales solo para pizzas
         if (showGeneralExtras) {
             html += `
                 <div class="general-extras-section">
@@ -216,9 +210,7 @@ function generateExtrasHTML(item) {
             `;
         }
         
-        // Mostrar notas para todas las categorías (excepto si es pizza, ya tiene el separador arriba)
         if (showNotes) {
-            const showSeparator = showSauces || showGeneralExtras;
             html += `
                 <div class="product-notes-container">
                     <label class="product-notes-label">
@@ -232,26 +224,36 @@ function generateExtrasHTML(item) {
             `;
         }
         
-        html += `</div>`; // Cierre del contenedor de extras
+        html += `</div>`;
     }
     
     return html;
 }
 
-// Función para configurar event listeners de extras
 function setupExtrasEventListeners(productId) {
-    // Botón para desplegar/ocultar extras
     const toggleBtn = document.querySelector(`.extras-toggle-btn[data-product-id="${productId}"]`);
     const extrasContainer = document.getElementById(`extras-container-${productId}`);
     
     if (toggleBtn && extrasContainer) {
-        toggleBtn.addEventListener('click', function() {
-            this.classList.toggle('expanded');
-            extrasContainer.classList.toggle('expanded');
+        toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            const isCurrentlyExpanded = this.classList.contains('expanded');
+            
+            document.querySelectorAll('.extras-toggle-btn').forEach(btn => {
+                btn.classList.remove('expanded');
+            });
+            document.querySelectorAll('.extras-container').forEach(container => {
+                container.classList.remove('expanded');
+            });
+            
+            if (!isCurrentlyExpanded) {
+                this.classList.add('expanded');
+                extrasContainer.classList.add('expanded');
+            }
         });
     }
     
-    // Salsas
     document.querySelectorAll(`.sauce-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const parent = this.parentElement;
@@ -263,7 +265,6 @@ function setupExtrasEventListeners(productId) {
         });
     });
     
-    // Adicionales generales (solo para pizzas)
     document.querySelectorAll(`.general-extra-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const parent = this.parentElement;
@@ -276,7 +277,6 @@ function setupExtrasEventListeners(productId) {
     });
 }
 
-// Función para actualizar cantidad de extras
 function updateExtraQty(extraId, change) {
     const input = document.getElementById(`extra-qty-${extraId}`);
     if (!input) return;
@@ -290,7 +290,6 @@ function updateExtraQty(extraId, change) {
     input.value = newValue;
 }
 
-// Función para agregar al carrito (llamada desde main.js)
 function addToCart(id) {
     const foodItem = foodItems.find(item => item.id === id);
     if (!foodItem) return;
@@ -298,14 +297,12 @@ function addToCart(id) {
     const quantityInput = document.getElementById(`qty-${id}`);
     const quantityToAdd = parseInt(quantityInput.value) || 1;
     
-    // Obtener salsas seleccionadas para este producto (si aplica)
     const sauceCheckboxes = document.querySelectorAll(`.sauce-checkbox[data-product-id="${id}"]:checked`);
     const selectedSauces = Array.from(sauceCheckboxes).map(checkbox => ({
         name: checkbox.dataset.name,
         price: parseInt(checkbox.dataset.price)
     }));
     
-    // Obtener adicionales generales seleccionados para este producto (si aplica - solo pizzas)
     const generalExtras = document.querySelectorAll(`.general-extra-checkbox[data-product-id="${id}"]:checked`);
     const selectedGeneralExtras = Array.from(generalExtras).map(checkbox => {
         const quantityInput = document.getElementById(`extra-qty-${checkbox.dataset.extraId}`);
@@ -319,11 +316,9 @@ function addToCart(id) {
         };
     });
     
-    // Obtener notas específicas del producto (siempre disponible)
     const notesInput = document.getElementById(`product-notes-${id}`);
     const productNotes = notesInput ? notesInput.value.trim() : '';
     
-    // Verificar si ya existe en el carrito
     const existingItemIndex = selectedItems.findIndex(item => 
         item.id === id && 
         JSON.stringify(item.sauces) === JSON.stringify(selectedSauces) &&
@@ -332,11 +327,9 @@ function addToCart(id) {
     );
     
     if (existingItemIndex >= 0) {
-        // Si es exactamente el mismo producto con los mismos extras, incrementar cantidad
         selectedItems[existingItemIndex].quantity += quantityToAdd;
         showNotification(`Se agregaron ${quantityToAdd} más de ${foodItem.name}`, 'success');
     } else {
-        // Crear nuevo item con sus extras
         const newItem = {
             ...foodItem,
             quantity: quantityToAdd,
@@ -349,7 +342,6 @@ function addToCart(id) {
         showNotification(`${foodItem.name} agregado al carrito`, 'success');
     }
     
-    // Reiniciar controles del producto
     resetProductControls(id);
     quantityInput.value = 1;
     
@@ -359,15 +351,12 @@ function addToCart(id) {
     saveToLocalStorage();
 }
 
-// Función para reiniciar controles del producto
 function resetProductControls(productId) {
-    // Desmarcar todas las salsas
     document.querySelectorAll(`.sauce-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
         checkbox.checked = false;
         checkbox.parentElement.classList.remove('selected');
     });
     
-    // Desmarcar y reiniciar adicionales generales
     document.querySelectorAll(`.general-extra-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
         checkbox.checked = false;
         checkbox.parentElement.classList.remove('selected');
@@ -376,11 +365,9 @@ function resetProductControls(productId) {
         if (qtyInput) qtyInput.value = 1;
     });
     
-    // Limpiar notas del producto
     const notesInput = document.getElementById(`product-notes-${productId}`);
     if (notesInput) notesInput.value = '';
     
-    // Cerrar el panel de extras
     const toggleBtn = document.querySelector(`.extras-toggle-btn[data-product-id="${productId}"]`);
     const extrasContainer = document.getElementById(`extras-container-${productId}`);
     
