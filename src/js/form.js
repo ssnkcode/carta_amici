@@ -1,7 +1,6 @@
 const FORM_CONFIG = {
     phonePattern: /^[0-9]{10,15}$/,
     defaultDeliveryCost: 300,
-    whatsappNumber: '5493541682310',
     businessLocation: {
         address: "Av. Roque Sáenz Peña, Córdoba Capital, Córdoba", 
         lat: -31.307277,  
@@ -9,6 +8,12 @@ const FORM_CONFIG = {
         zoom: 16 
     }
 };
+
+if (typeof selectedItems !== 'undefined') {
+    window.selectedItems = selectedItems;
+} else {
+    window.selectedItems = [];
+}
 
 function getCarritoActual() {
     if (typeof selectedItems !== 'undefined' && Array.isArray(selectedItems)) {
@@ -19,17 +24,53 @@ function getCarritoActual() {
     }
     try {
         const saved = localStorage.getItem('deliciasExpress_selectedItems');
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+            return JSON.parse(saved);
+        }
     } catch(e) {}
     
     return [];
 }
 
+function generarUbicacionGoogleMaps() {
+    try {
+        const calle = document.getElementById('customer-street')?.value.trim() || '';
+        const numero = document.getElementById('customer-number')?.value.trim() || '';
+        const ciudad = document.getElementById('customer-city')?.value.trim() || '';
+        
+        if (!calle || !numero || !ciudad) {
+            return null;
+        }
+        
+        const direccionParaMapa = `${calle} ${numero}, ${ciudad}, Córdoba, Argentina`;
+        const direccionCodificada = encodeURIComponent(direccionParaMapa);
+        const urlGoogleMaps = `https://www.google.com/maps/search/?api=1&query=${direccionCodificada}`;
+        
+        return {
+            texto: `📍 *UBICACIÓN EN GOOGLE MAPS:*\n${urlGoogleMaps}`,
+            url: urlGoogleMaps
+        };
+        
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+
 function setupMap() {
+    if (typeof window.setupStaticMap === 'function') {
+        window.setupStaticMap();
+    } else {
+        setupMapFallback();
+    }
+}
+
+function setupMapFallback() {
     const mapFrame = document.getElementById('map-frame');
     if (!mapFrame) return;
     
-    const { lat, lng, address } = FORM_CONFIG.businessLocation;
+    const lat = FORM_CONFIG.businessLocation.lat;
+    const lng = FORM_CONFIG.businessLocation.lng;
     const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.003},${lat-0.003},${lng+0.003},${lat+0.003}&layer=mapnik&marker=${lat},${lng}`;
     
     mapFrame.innerHTML = `
@@ -40,234 +81,481 @@ function setupMap() {
             style="border:none;"
             allowfullscreen
             loading="lazy"
-            title="Ubicación - ${address}">
+            title="Ubicación del Negocio">
         </iframe>
     `;
+}
+
+function calculateSubtotal() {
+    const carrito = getCarritoActual();
+    
+    if (!carrito || carrito.length === 0) {
+        return 0;
+    }
+    
+    const subtotal = carrito.reduce((total, item) => {
+        const precio = item.price || 0;
+        const cantidad = item.quantity || 1;
+        
+        const saucesTotal = item.sauces ? item.sauces.reduce((sum, s) => sum + s.price, 0) : 0;
+        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, e) => sum + (e.price * e.quantity), 0) : 0;
+        
+        return total + ((precio * cantidad) + saucesTotal + generalExtrasTotal);
+    }, 0);
+    
+    return subtotal;
+}
+
+function calculateGlobalExtras() {
+    let totalExtras = 0;
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(.cart-item-check)');
+    
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            if (cb.dataset.price) {
+                totalExtras += parseInt(cb.dataset.price) || 0;
+            } else {
+                if (cb.id.includes('cubiertos')) totalExtras += 50;
+                if (cb.id.includes('salsas')) totalExtras += 100;
+                if (cb.id.includes('servilletas')) totalExtras += 30;
+            }
+        }
+    });
+    
+    return totalExtras;
+}
+
+function updateOrderSummary() {
+    const subtotal = calculateSubtotal();
+    const globalExtras = calculateGlobalExtras();
+    const totalBase = subtotal + globalExtras;
+    
+    const subtotalElement = document.getElementById('subtotal');
+    const totalElement = document.getElementById('total-cost');
+    const deliveryElement = document.getElementById('delivery-cost');
+    
+    // 1. Mostrar Subtotal (siempre visible)
+    if (subtotalElement) {
+        subtotalElement.textContent = `$${totalBase}`;
+    }
+
+    // 2. Verificar si la dirección está completa
+    const calle = document.getElementById('customer-street')?.value.trim();
+    const numero = document.getElementById('customer-number')?.value.trim();
+    const ciudad = document.getElementById('customer-city')?.value.trim();
+    const addressComplete = calle && numero && ciudad;
+
+    // 3. ESTADO A: Dirección Incompleta (Prioridad sobre todo, incluso si es $0)
+    if (!addressComplete) {
+        if (deliveryElement) {
+            deliveryElement.textContent = "A calcular";
+            deliveryElement.className = 'delivery-cost-warning';
+            deliveryElement.dataset.cost = "0"; 
+        }
+        if (totalElement) {
+            totalElement.innerHTML = `$${totalBase} <span style="font-size: 0.7em; color: #dc3545;">+ Envío</span>`;
+        }
+        return; // Salimos aquí para mantener el estado "A calcular"
+    }
+
+    // 4. ESTADO B: Dirección Completa - Intentar obtener costo calculado
+    let deliveryCost = 0;
+    let hasCalculatedDelivery = false;
+    let isCalculating = false;
+    
+    if (deliveryElement) {
+        if (deliveryElement.dataset.calculating === "true") {
+            isCalculating = true;
+        } else if (deliveryElement.dataset.cost) {
+            deliveryCost = parseInt(deliveryElement.dataset.cost) || 0;
+            // Consideramos calculado si tiene costo o si es explícitamente 0 (gratis)
+            // pero NO si el texto sigue diciendo "A calcular" por algún error
+            if (!deliveryElement.textContent.includes("A calcular")) {
+                hasCalculatedDelivery = true;
+            }
+        } else {
+            const rawText = deliveryElement.textContent;
+            if (rawText.includes('$') && /\d/.test(rawText)) {
+                deliveryCost = parseInt(rawText.replace(/[^0-9]/g, '')) || 0;
+                hasCalculatedDelivery = true;
+            }
+        }
+    }
+
+    // 5. Renderizar Total Final basado en estado de cálculo
+    if (totalElement) {
+        if (isCalculating) {
+             totalElement.innerHTML = `$${totalBase} <span style="font-size: 0.7em; color: #666;">+ Calculando...</span>`;
+        } else if (hasCalculatedDelivery) {
+            const totalFinal = totalBase + deliveryCost;
+            totalElement.textContent = `$${totalFinal}`;
+            totalElement.style.color = "#000";
+        } else {
+            // Fallback si hay dirección pero falló el cálculo
+            totalElement.innerHTML = `$${totalBase} <span style="font-size: 0.7em; color: #dc3545;">+ Envío</span>`;
+            if (deliveryElement && !isCalculating) {
+                deliveryElement.textContent = "A calcular";
+                deliveryElement.className = 'delivery-cost-warning';
+            }
+        }
+    }
 }
 
 function validateForm() {
     const carrito = getCarritoActual();
     
     if (carrito.length === 0) {
-        if (typeof showNotification === 'function') {
-            showNotification('Tu carrito está vacío', 'error');
-        } else {
-            alert('Tu carrito está vacío');
-        }
-        const cartSection = document.getElementById('food-grid');
-        if(cartSection) cartSection.scrollIntoView({ behavior: 'smooth' });
+        showCustomAlert("❌ El carrito está vacío", "Agrega productos antes de continuar.");
         return false;
     }
     
-    const requiredFields = [
-        {id: 'customer-name'},
-        {id: 'customer-phone'},
-        {id: 'customer-city'},
-        {id: 'customer-street'},
-        {id: 'customer-number'},
-        {id: 'customer-neighborhood'}
+    const campos = [
+        {id: 'customer-name', nombre: 'nombre'},
+        {id: 'customer-phone', nombre: 'WhatsApp'},
+        {id: 'customer-street', nombre: 'calle'},
+        {id: 'customer-number', nombre: 'número'},
+        {id: 'customer-neighborhood', nombre: 'barrio'},
+        {id: 'customer-city', nombre: 'ciudad'}
     ];
     
-    let isValid = true;
-    let firstErrorField = null;
+    let camposValidos = true;
+    let primerCampoVacio = null;
     
-    for (let field of requiredFields) {
-        const el = document.getElementById(field.id);
-        if (el) {
-            if (!el.value.trim()) {
-                el.style.borderColor = '#ff4757';
-                if (!firstErrorField) firstErrorField = el;
-                isValid = false;
+    for (let campo of campos) {
+        const elemento = document.getElementById(campo.id);
+        if (elemento) {
+            const valor = elemento.value.trim();
+            if (!valor) {
+                if (!primerCampoVacio) primerCampoVacio = elemento;
+                camposValidos = false;
+                elemento.style.borderColor = '#dc3545';
             } else {
-                el.style.borderColor = '#2ecc71';
+                elemento.style.borderColor = '';
             }
         }
     }
-
-    const paymentMethod = document.querySelector('input[name="payment-method"]:checked');
-    const paymentContainer = document.querySelector('.payment-options');
     
-    if (!paymentMethod) {
-        if(paymentContainer) paymentContainer.style.border = '1px solid #ff4757';
-        isValid = false;
-        if (!firstErrorField && paymentContainer) firstErrorField = paymentContainer;
-    } else {
-        if(paymentContainer) paymentContainer.style.border = 'none';
-    }
-    
-    if (!isValid && firstErrorField) {
-        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        firstErrorField.focus();
-        if (typeof showNotification === 'function') {
-            showNotification('Completa los campos obligatorios', 'error');
-        }
+    if (!camposValidos && primerCampoVacio) {
+        primerCampoVacio.focus();
+        showCustomAlert("❌ Campos incompletos", "Por favor completa todos los campos requeridos.");
         return false;
     }
     
     return true;
 }
 
-function processOrder() {
-    if (!validateForm()) return;
+function createOrderModal() {
+    if (document.getElementById('order-confirm-modal')) return;
 
-    const submitBtn = document.querySelector('.submit-btn');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-    submitBtn.disabled = true;
+    const modalHTML = `
+        <div id="order-confirm-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-icon">📋</div>
+                <h3>Confirmar Pedido</h3>
+                <div id="order-modal-details" style="text-align: left; margin: 15px 0; font-size: 0.9rem; color: #555; background: #f9f9f9; padding: 15px; border-radius: 8px;">
+                    </div>
+                <div class="modal-actions">
+                    <button id="btn-cancel-order" class="modal-btn cancel">Cancelar</button>
+                    <button id="btn-confirm-order" class="modal-btn confirm">Enviar a WhatsApp</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
 
-    try {
-        const data = {
-            name: document.getElementById('customer-name').value.trim(),
-            phone: document.getElementById('customer-phone').value.trim(),
-            city: document.getElementById('customer-city').value.trim(),
-            street: document.getElementById('customer-street').value.trim(),
-            number: document.getElementById('customer-number').value.trim(),
-            neighborhood: document.getElementById('customer-neighborhood').value.trim(),
-            notes: document.getElementById('order-notes')?.value.trim() || '',
-            payment: document.querySelector('input[name="payment-method"]:checked').value
+function createAlertModal() {
+    if (document.getElementById('custom-alert-modal')) return;
+
+    const modalHTML = `
+        <div id="custom-alert-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-icon warning" id="alert-icon">⚠️</div>
+                <h3 id="alert-title">Atención</h3>
+                <p id="alert-message"></p>
+                <div class="modal-actions">
+                    <button id="btn-close-alert" class="modal-btn confirm">Entendido</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    document.getElementById('btn-close-alert').addEventListener('click', () => {
+        document.getElementById('custom-alert-modal').classList.remove('active');
+    });
+}
+
+function showCustomAlert(title, message) {
+    createAlertModal();
+    document.getElementById('alert-title').textContent = title;
+    document.getElementById('alert-message').textContent = message;
+    document.getElementById('custom-alert-modal').classList.add('active');
+}
+
+function showOrderConfirmation(details) {
+    createOrderModal();
+    const modal = document.getElementById('order-confirm-modal');
+    const content = document.getElementById('order-modal-details');
+    const btnConfirm = document.getElementById('btn-confirm-order');
+    const btnCancel = document.getElementById('btn-cancel-order');
+    
+    content.innerHTML = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>Subtotal Productos:</span> <span>$${details.subtotal}</span>
+        </div>
+        ${details.extras > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>Adicionales Generales:</span> <span>$${details.extras}</span>
+        </div>` : ''}
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>Envío a ${details.barrio}:</span> <span>$${details.envio}</span>
+        </div>
+        ${details.descuento > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #2ecc71;">
+            <span>Descuento (Efectivo):</span> <span>-$${details.descuento}</span>
+        </div>` : ''}
+        <div style="border-top: 1px dashed #ccc; margin: 10px 0;"></div>
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; color: #000;">
+            <span>TOTAL FINAL:</span> <span>$${details.total}</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; text-align: center; color: #888;">
+            Tiempo estimado: ${details.tiempo}
+        </div>
+    `;
+
+    return new Promise((resolve) => {
+        modal.classList.add('active');
+        
+        const handleConfirm = () => {
+            modal.classList.remove('active');
+            cleanup();
+            resolve(true);
+        };
+        
+        const handleCancel = () => {
+            modal.classList.remove('active');
+            cleanup();
+            resolve(false);
+        };
+        
+        const cleanup = () => {
+            btnConfirm.removeEventListener('click', handleConfirm);
+            btnCancel.removeEventListener('click', handleCancel);
         };
 
-        const direccionCompleta = `${data.street} ${data.number}, ${data.neighborhood}, ${data.city}`;
-        const carrito = getCarritoActual();
-
-        const subtotal = carrito.reduce((total, item) => {
-            const saucesTotal = item.sauces ? item.sauces.reduce((s, sauce) => s + sauce.price, 0) : 0;
-            const extrasTotal = item.generalExtras ? item.generalExtras.reduce((s, extra) => s + (extra.price * extra.quantity), 0) : 0;
-            return total + ((item.price * item.quantity) + saucesTotal + extrasTotal);
-        }, 0);
-
-        const globalExtras = Array.from(document.querySelectorAll('.extra-checkbox:checked'))
-            .reduce((total, checkbox) => total + parseInt(checkbox.dataset.price || 0), 0);
-
-        const envio = FORM_CONFIG.defaultDeliveryCost;
-        let total = subtotal + globalExtras + envio;
-        let discount = 0;
-
-        if (data.payment === 'efectivo') {
-            discount = Math.round(total * 0.10);
-            total = total - discount;
-        }
-
-        const EMOJIS = {
-            pizza: '\uD83C\uDF55',
-            user: '\uD83D\uDC64',
-            phone: '\uD83D\uDCF1',
-            pin: '\uD83D\uDCCD',
-            note: '\uD83D\uDCDD',
-            cart: '\uD83D\uDED2',
-            bullet: '\u25AA',
-            arrow: '\u21AA',
-            box: '\uD83D\uDCE6',
-            card: '\uD83D\uDCB3',
-            bill: '\uD83E\uDDFE',
-            moto: '\uD83D\uDEF5',
-            party: '\uD83C\uDF89',
-            check: '\u2705'
-        };
-
-        let msg = `*HOLA, QUIERO REALIZAR UN PEDIDO* ${EMOJIS.pizza}\n\n`;
+        btnConfirm.addEventListener('click', handleConfirm);
+        btnCancel.addEventListener('click', handleCancel);
         
-        msg += `${EMOJIS.user} *Cliente:* ${data.name}\n`;
-        msg += `${EMOJIS.phone} *Tel:* ${data.phone}\n`;
-        msg += `${EMOJIS.pin} *Dirección:* ${direccionCompleta}\n`;
-        
-        if (data.notes) {
-            msg += `${EMOJIS.note} *Nota a cocina:* ${data.notes}\n`;
-        }
-        
-        msg += `\n--------------------------------\n`;
-        msg += `${EMOJIS.cart} *DETALLE DEL PEDIDO:*\n`;
-        
-        carrito.forEach((item) => {
-            msg += `\n${EMOJIS.bullet} *${item.quantity}x ${item.name}*`;
-            
-            const isEmpanada = item.category === 'empanadas';
-            if (item.notes) {
-                msg += `\n   ${EMOJIS.arrow} ${isEmpanada ? 'Sabores' : 'Nota'}: ${item.notes}`;
-            }
-
-            if (item.sauces && item.sauces.length > 0) {
-                const salsaNames = item.sauces.map(s => s.name).join(', ');
-                msg += `\n   + Salsas: ${salsaNames}`;
-            }
-
-            if (item.generalExtras && item.generalExtras.length > 0) {
-                item.generalExtras.forEach(extra => {
-                    msg += `\n   + ${extra.quantity}x ${extra.name}`;
-                });
-            }
-            msg += `\n`;
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) handleCancel();
         });
+    });
+}
 
-        const selectedGlobalExtras = Array.from(document.querySelectorAll('.extra-checkbox:checked'));
-        if(selectedGlobalExtras.length > 0) {
-             msg += `\n${EMOJIS.box} *ADICIONALES:*\n`;
-             selectedGlobalExtras.forEach(ex => {
-                 msg += `   • ${ex.dataset.name}\n`;
-             });
-        }
-
-        msg += `\n--------------------------------\n`;
-        msg += `💰 *RESUMEN DE PAGO:*\n`;
-        
-        const paymentLabel = data.payment.charAt(0).toUpperCase() + data.payment.slice(1);
-        
-        msg += `${EMOJIS.card} Pago: *${paymentLabel}*\n`;
-        msg += `${EMOJIS.bill} Subtotal: $${subtotal + globalExtras}\n`;
-        msg += `${EMOJIS.moto} Envío: $${envio}\n`;
-        
-        if (discount > 0) {
-            msg += `${EMOJIS.party} Descuento (10%): -$${discount}\n`;
-        }
-        
-        msg += `\n${EMOJIS.check} *TOTAL A PAGAR: $${total}*`;
-        
-        const url = `https://wa.me/${FORM_CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
-        
-        setTimeout(() => {
-            window.open(url, '_blank');
-            submitBtn.innerHTML = '<i class="fas fa-check"></i> ¡Enviado!';
-            submitBtn.style.background = '#2ecc71';
-            
-            setTimeout(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                submitBtn.style.background = '';
-            }, 3000);
-        }, 800);
-
-    } catch (error) {
-        console.error(error);
-        alert("Error al procesar. Intenta de nuevo.");
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
+async function processOrder() {
+    if (!validateForm()) {
+        return;
     }
+    
+    const nombre = document.getElementById('customer-name').value.trim();
+    const telefono = document.getElementById('customer-phone').value.trim();
+    const ciudad = document.getElementById('customer-city').value.trim();
+    const calle = document.getElementById('customer-street').value.trim();
+    const numero = document.getElementById('customer-number').value.trim();
+    const barrio = document.getElementById('customer-neighborhood').value.trim();
+    const notas = document.getElementById('order-notes')?.value.trim() || '';
+    const metodoPago = document.querySelector('input[name="payment-method"]:checked')?.value || 'Efectivo';
+    
+    const direccionCompleta = `${calle} ${numero}, ${barrio}, ${ciudad}`;
+    
+    let costoEnvio = 0;
+    let tiempoEstimado = "Consultar";
+    
+    const deliveryElement = document.getElementById('delivery-cost');
+    if (deliveryElement) {
+        if (deliveryElement.dataset.cost) {
+            costoEnvio = parseInt(deliveryElement.dataset.cost) || 0;
+        } else if (deliveryElement.textContent.includes('$')) {
+            costoEnvio = parseInt(deliveryElement.textContent.replace(/[^0-9]/g, '')) || 0;
+        }
+    }
+
+    if (costoEnvio === 0 && typeof window.calculateDeliveryFromAddress === 'function') {
+        try {
+            const deliveryResult = await window.calculateDeliveryFromAddress(direccionCompleta);
+            if (deliveryResult && deliveryResult.dentroCobertura) {
+                costoEnvio = deliveryResult.costo;
+                tiempoEstimado = deliveryResult.tiempoEstimado || `${deliveryResult.duracionCalculada} min`;
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    
+    if (costoEnvio === 0) {
+         if (!confirm("No se pudo calcular el costo de envío exacto. Se coordinará por WhatsApp. ¿Deseas continuar?")) {
+             return;
+         }
+    }
+
+    const carrito = getCarritoActual();
+    const subtotal = calculateSubtotal();
+    const extras = calculateGlobalExtras();
+    
+    let total = subtotal + extras + costoEnvio;
+    let descuento = 0;
+    
+    if (metodoPago === 'efectivo') {
+        descuento = Math.round(total * 0.10); 
+        total = total - descuento;
+    }
+    
+    const confirmacion = await showOrderConfirmation({
+        subtotal: subtotal,
+        extras: extras,
+        envio: costoEnvio,
+        barrio: barrio,
+        descuento: descuento,
+        total: total,
+        tiempo: tiempoEstimado
+    });
+
+    if (!confirmacion) {
+        return;
+    }
+    
+    let mensaje = `📋 *NUEVO PEDIDO - COMIDAS AMICI*\n\n`;
+    
+    mensaje += `👤 *CLIENTE:* ${nombre}\n`;
+    mensaje += `📱 *WHATSAPP:* ${telefono}\n`;
+    mensaje += `📍 *DIRECCIÓN DE ENTREGA:*\n${direccionCompleta}\n`;
+    
+    const ubicacion = generarUbicacionGoogleMaps();
+    if (ubicacion && ubicacion.texto) {
+        mensaje += `${ubicacion.texto}\n`;
+    }
+    
+    mensaje += `⏱️ Tiempo estimado: ${tiempoEstimado}\n`;
+    
+    if (notas) {
+        mensaje += `📝 *NOTAS DEL PEDIDO:* ${notas}\n`;
+    }
+    
+    mensaje += `\n🛒 *DETALLE DEL PEDIDO:*\n`;
+    mensaje += `══════════════════════════\n`;
+    
+    carrito.forEach((item, index) => {
+        const nombreProducto = item.name || 'Producto';
+        const cantidad = item.quantity || 1;
+        const precio = item.price || 0;
+        
+        const saucesTotal = item.sauces ? item.sauces.reduce((sum, s) => sum + s.price, 0) : 0;
+        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, e) => sum + (e.price * e.quantity), 0) : 0;
+        const totalItem = (precio * cantidad) + saucesTotal + generalExtrasTotal;
+        
+        mensaje += `${index + 1}. *${nombreProducto}* x${cantidad}\n`;
+        
+        if (item.empandasFlavors && item.empandasFlavors.length > 0) {
+            mensaje += `   🥟 Gustos: ${item.empandasFlavors.join(', ')}\n`;
+        }
+
+        if (item.sauces && item.sauces.length > 0) {
+            const salsas = item.sauces.map(s => s.name).join(', ');
+            mensaje += `   🧂 Salsas: ${salsas}\n`;
+        }
+        
+        if (item.generalExtras && item.generalExtras.length > 0) {
+            item.generalExtras.forEach(extra => {
+                mensaje += `   ➕ ${extra.name} x${extra.quantity || 1}\n`;
+            });
+        }
+        
+        if (item.notes) {
+            mensaje += `   📝 Nota producto: ${item.notes}\n`;
+        }
+        
+        mensaje += `   Subtotal: $${totalItem}\n`;
+        mensaje += `   ─────────────────\n`;
+    });
+
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(.cart-item-check)');
+    let hasExtras = false;
+    let extrasMsg = `\n➕ *ADICIONALES GENERALES:*\n`;
+    
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            let name = cb.id; 
+            let price = 0;
+            if (cb.dataset.price) {
+                price = cb.dataset.price;
+                name = cb.dataset.name || cb.parentElement.innerText.split('$')[0].trim();
+            }
+            else if (cb.id.includes('cubiertos')) { name = 'Cubiertos'; price = 50; }
+            else if (cb.id.includes('salsas')) { name = 'Salsas'; price = 100; }
+            else if (cb.id.includes('servilletas')) { name = 'Servilletas'; price = 30; }
+            
+            if (price > 0) {
+                hasExtras = true;
+                extrasMsg += `   • ${name}: $${price}\n`;
+            }
+        }
+    });
+    
+    if (hasExtras) {
+        mensaje += extrasMsg;
+    }
+    
+    mensaje += `\n💰 *RESUMEN DE PAGO:*\n`;
+    mensaje += `══════════════════════════\n`;
+    mensaje += `Método de pago: ${metodoPago.toUpperCase()}\n`;
+    mensaje += `Subtotal productos: $${subtotal}\n`;
+    if (extras > 0) mensaje += `Adicionales generales: $${extras}\n`;
+    mensaje += `Costo de envío: $${costoEnvio}\n`;
+    if (descuento > 0) {
+        mensaje += `Descuento (10% Efectivo): -$${descuento}\n`;
+    }
+    mensaje += `*TOTAL A PAGAR: $${total}*\n\n`;
+    
+    mensaje += `¡Gracias por tu pedido! 🍕`;
+    
+    const telefonoNegocio = '5493541682310';
+    const mensajeCodificado = encodeURIComponent(mensaje);
+    const urlWhatsApp = `https://wa.me/${telefonoNegocio}?text=${mensajeCodificado}`;
+    
+    window.open(urlWhatsApp, '_blank');
 }
 
 function initForm() {
     setupMap();
+    createOrderModal();
+    createAlertModal();
     
-    const form = document.getElementById('order-form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
+    const formulario = document.getElementById('order-form');
+    if (formulario) {
+        formulario.addEventListener('submit', function(e) {
             e.preventDefault();
             processOrder();
         });
-    }
 
-    const phoneInput = document.getElementById('customer-phone');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
+        // Escuchar cambios en todo el formulario para actualizar totales
+        formulario.addEventListener('change', updateOrderSummary);
+        formulario.addEventListener('input', updateOrderSummary);
     }
+    
+    updateOrderSummary();
 }
 
-window.processOrder = processOrder;
+window.calculateSubtotal = calculateSubtotal;
+window.calculateGlobalExtras = calculateGlobalExtras;
 window.validateForm = validateForm;
+window.processOrder = processOrder;
+window.getCarritoActual = getCarritoActual;
+window.updateOrderSummary = updateOrderSummary;
+window.generarUbicacionGoogleMaps = generarUbicacionGoogleMaps;
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initForm);
 } else {
-    initForm();
+    setTimeout(initForm, 100);
 }
