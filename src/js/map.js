@@ -571,8 +571,6 @@ function showDeliveryDetails(resultado) {
         infoExtra = '<div class="approximation-note"><i class="fas fa-info-circle"></i> Cálculo aproximado</div>';
     }
     
-    // NOTA: Se eliminó la variable 'formula' y la fila de la calculadora
-    
     detailsElement.innerHTML = `
         <div class="delivery-info">
             <div class="delivery-row">
@@ -692,6 +690,259 @@ function showLoadingIndicator(show) {
 }
 
 // ============================================
+// 13. FUNCIÓN PARA GENERAR URL DE UBICACIÓN DE GOOGLE MAPS
+// ============================================
+
+function generarUrlUbicacion() {
+    console.log("📍 Generando URL de Google Maps...");
+    
+    // Obtener datos del formulario
+    const calle = document.getElementById('customer-street')?.value.trim() || '';
+    const numero = document.getElementById('customer-number')?.value.trim() || '';
+    const barrio = document.getElementById('customer-neighborhood')?.value.trim() || '';
+    const ciudad = document.getElementById('customer-city')?.value.trim() || '';
+    
+    // Verificar datos mínimos
+    if (!calle || !numero || !ciudad) {
+        console.warn("⚠️ Faltan datos para generar ubicación");
+        return null;
+    }
+    
+    // Construir dirección para Google Maps
+    let direccionParaMapa = `${calle}+${numero}`;
+    if (barrio) direccionParaMapa += `,+${barrio}`;
+    direccionParaMapa += `,+${ciudad},+Córdoba,+Argentina`;
+    
+    // Limpiar caracteres especiales
+    direccionParaMapa = direccionParaMapa
+        .replace(/\s+/g, '+')
+        .replace(/ñ/g, 'n')
+        .replace(/Ñ/g, 'N')
+        .replace(/á/g, 'a')
+        .replace(/é/g, 'e')
+        .replace(/í/g, 'i')
+        .replace(/ó/g, 'o')
+        .replace(/ú/g, 'u')
+        .replace(/Á/g, 'A')
+        .replace(/É/g, 'E')
+        .replace(/Í/g, 'I')
+        .replace(/Ó/g, 'O')
+        .replace(/Ú/g, 'U');
+    
+    // Generar URL de Google Maps
+    const urlGoogleMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccionParaMapa)}`;
+    
+    // Generar texto legible
+    const direccionTexto = `${calle} ${numero}${barrio ? ', ' + barrio : ''}, ${ciudad}, Córdoba, Argentina`
+        .replace(/, ,/g, ',')
+        .replace(/^\s*,\s*|\s*,\s*$/g, '');
+    
+    console.log("✅ URL de Google Maps generada:", urlGoogleMaps);
+    
+    return {
+        googleMaps: urlGoogleMaps,
+        direccionTexto: direccionTexto,
+        direccionCorta: `${calle} ${numero}, ${ciudad}`
+    };
+}
+
+// ============================================
+// 14. INTEGRACIÓN CON FORM.JS - VERSIÓN SIMPLIFICADA SIN DUPLICADOS
+// ============================================
+
+function integrarConFormJS() {
+    console.log("🔗 Integrando con form.js...");
+    
+    // Sobrescribir la función submitOrder de form.js
+    if (typeof window.submitOrder === 'function') {
+        console.log("✅ Función submitOrder encontrada, integrando...");
+        
+        const originalSubmitOrder = window.submitOrder;
+        
+        window.submitOrder = function() {
+            console.log("📍 submitOrder interceptado - Agregando ubicación de Google Maps");
+            
+            // Generar URL de ubicación
+            const ubicacion = generarUrlUbicacion();
+            
+            if (ubicacion) {
+                console.log("✅ Ubicación generada, procesando mensaje...");
+                
+                // Buscar el textarea del mensaje
+                const messageElement = document.getElementById('whatsapp-message');
+                if (messageElement) {
+                    let mensajeActual = messageElement.value || '';
+                    
+                    // Verificar si ya tiene la ubicación para evitar duplicados
+                    const ubicacionPattern = /UBICACIÓN EN GOOGLE MAPS:.*google\.com\/maps/i;
+                    
+                    if (!ubicacionPattern.test(mensajeActual)) {
+                        // Buscar donde agregar la ubicación (después de la dirección)
+                        const lines = mensajeActual.split('\n');
+                        let newMessage = '';
+                        let ubicacionAgregada = false;
+                        
+                        for (let i = 0; i < lines.length; i++) {
+                            newMessage += lines[i] + '\n';
+                            
+                            // Buscar la línea de dirección
+                            if (!ubicacionAgregada && 
+                                (lines[i].includes('DIRECCIÓN DE ENTREGA:') || 
+                                 lines[i].includes('Dirección de entrega:') ||
+                                 lines[i].includes('📍 *DIRECCIÓN DE ENTREGA:*'))) {
+                                
+                                // Agregar la ubicación después de la dirección
+                                newMessage += `\n📍 *UBICACIÓN EN GOOGLE MAPS:*\n`;
+                                newMessage += `${ubicacion.googleMaps}\n\n`;
+                                ubicacionAgregada = true;
+                                
+                                // Saltar las siguientes líneas que son la dirección misma
+                                i++; // línea vacía
+                                if (lines[i] && lines[i].trim()) i++; // línea de calle
+                                if (lines[i] && lines[i].trim()) i++; // línea de barrio/ciudad
+                            }
+                        }
+                        
+                        // Si no encontró donde insertar, agregar al final
+                        if (!ubicacionAgregada) {
+                            newMessage += `\n\n📍 *UBICACIÓN EN GOOGLE MAPS:*\n${ubicacion.googleMaps}\n`;
+                        }
+                        
+                        messageElement.value = newMessage;
+                        console.log("✅ Ubicación de Google Maps agregada al mensaje SIN DUPLICADOS");
+                    } else {
+                        console.log("ℹ️ El mensaje ya contiene ubicación, no se duplica");
+                    }
+                }
+            }
+            
+            // Ejecutar la función original
+            return originalSubmitOrder();
+        };
+        
+        console.log("✅ Función submitOrder integrada exitosamente");
+        
+    } else {
+        console.warn("⚠️ Función submitOrder no encontrada en form.js");
+        integrarWhatsappDirectamente();
+    }
+}
+
+// 14.1 Integración directa con botón de WhatsApp (fallback)
+function integrarWhatsappDirectamente() {
+    console.log("🔗 Intentando integración directa con botón WhatsApp...");
+    
+    const whatsappBtn = document.querySelector('.whatsapp-button, .whatsapp-submit-btn, .submit-btn');
+    
+    if (whatsappBtn) {
+        console.log("✅ Botón WhatsApp encontrado");
+        
+        // Guardar el onclick original
+        const originalOnClick = whatsappBtn.onclick;
+        
+        whatsappBtn.addEventListener('click', function(e) {
+            console.log("📍 Botón WhatsApp clickeado - Agregando ubicación");
+            
+            // Generar ubicación antes de enviar
+            const ubicacion = generarUrlUbicacion();
+            
+            if (ubicacion) {
+                // Intentar actualizar el mensaje si existe
+                const messageElement = document.getElementById('whatsapp-message');
+                if (messageElement) {
+                    let mensaje = messageElement.value || '';
+                    
+                    // Verificar si ya tiene ubicación para evitar duplicados
+                    if (!mensaje.includes('google.com/maps') && !mensaje.includes('UBICACIÓN EN GOOGLE MAPS')) {
+                        // Agregar ubicación al final del mensaje
+                        mensaje += `\n\n📍 *UBICACIÓN EN GOOGLE MAPS:*\n${ubicacion.googleMaps}`;
+                        messageElement.value = mensaje;
+                        console.log("✅ Ubicación agregada al mensaje");
+                    }
+                }
+            }
+            
+            // Si hay función original, ejecutarla
+            if (originalOnClick) {
+                return originalOnClick.call(this, e);
+            }
+        });
+    }
+}
+
+// ============================================
+// 15. INTEGRACIÓN MEJORADA SIN DUPLICADOS
+// ============================================
+
+function agregarUbicacionAlMensajeWhatsApp() {
+    console.log("📍 Agregando ubicación al mensaje de WhatsApp...");
+    
+    const messageElement = document.getElementById('whatsapp-message');
+    if (!messageElement) {
+        console.warn("⚠️ No se encontró textarea de WhatsApp");
+        return false;
+    }
+    
+    // Generar ubicación
+    const ubicacion = generarUrlUbicacion();
+    if (!ubicacion) {
+        console.warn("⚠️ No se pudo generar ubicación");
+        return false;
+    }
+    
+    let mensaje = messageElement.value || '';
+    
+    // VERIFICAR DUPLICADOS: Buscar si ya existe una ubicación similar
+    const ubicacionExistenteRegex = /📍 \*UBICACIÓN EN GOOGLE MAPS:\*\s*\nhttps:\/\/www\.google\.com\/maps\/[^\n]*/i;
+    
+    if (ubicacionExistenteRegex.test(mensaje)) {
+        console.log("ℹ️ Ya existe ubicación en el mensaje, reemplazando...");
+        // Reemplazar la ubicación existente
+        mensaje = mensaje.replace(ubicacionExistenteRegex, 
+            `📍 *UBICACIÓN EN GOOGLE MAPS:*\n${ubicacion.googleMaps}`);
+    } else {
+        console.log("➕ Agregando nueva ubicación...");
+        // Buscar el mejor lugar para insertar
+        const lines = mensaje.split('\n');
+        let newMessage = '';
+        let ubicacionInsertada = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+            newMessage += lines[i] + '\n';
+            
+            // Buscar después de la dirección de entrega
+            if (!ubicacionInsertada && lines[i].includes('DIRECCIÓN DE ENTREGA')) {
+                // Saltar la línea actual y la siguiente (que debería ser la dirección)
+                i++; // Saltar línea de dirección
+                
+                // Agregar la ubicación
+                newMessage += `\n📍 *UBICACIÓN EN GOOGLE MAPS:*\n${ubicacion.googleMaps}\n\n`;
+                ubicacionInsertada = true;
+            }
+        }
+        
+        // Si no encontró donde insertar, agregar antes del resumen de pago
+        if (!ubicacionInsertada) {
+            const pagoIndex = mensaje.indexOf('RESUMEN DE PAGO:');
+            if (pagoIndex !== -1) {
+                mensaje = mensaje.slice(0, pagoIndex) + 
+                         `\n📍 *UBICACIÓN EN GOOGLE MAPS:*\n${ubicacion.googleMaps}\n\n` +
+                         mensaje.slice(pagoIndex);
+            } else {
+                // Agregar al final como último recurso
+                mensaje += `\n\n📍 *UBICACIÓN EN GOOGLE MAPS:*\n${ubicacion.googleMaps}\n`;
+            }
+        } else {
+            mensaje = newMessage;
+        }
+    }
+    
+    messageElement.value = mensaje;
+    console.log("✅ Ubicación de Google Maps agregada/actualizada SIN DUPLICADOS");
+    return true;
+}
+
+// ============================================
 // INICIALIZACIÓN
 // ============================================
 
@@ -706,10 +957,15 @@ function initMapSystem() {
     
     integrateWithExistingSystem();
     
+    // Integrar con form.js después de un tiempo
+    setTimeout(() => {
+        integrarConFormJS();
+    }, 1500);
+    
     console.log("✅ Sistema de mapas inicializado - Costo: $", MAP_CONFIG.costoPorMinuto, "por minuto");
 }
 
-// 13. Integración con sistema existente
+// 16. Integración con sistema existente
 function integrateWithExistingSystem() {
     console.log("🔗 Integrando con sistema existente...");
     
@@ -734,7 +990,7 @@ function integrateWithExistingSystem() {
     addDeliveryStyles();
 }
 
-// 14. Añadir estilos CSS
+// 17. Añadir estilos CSS
 function addDeliveryStyles() {
     console.log("✅ Usando map.css para estilos");
     
@@ -750,7 +1006,7 @@ function addDeliveryStyles() {
     }
 }
 
-// 15. Estilos de respaldo - ACTUALIZADOS
+// 18. Estilos de respaldo - ACTUALIZADOS
 function createFallbackStyles() {
     const styleId = 'map-fallback-styles';
     if (!document.getElementById(styleId)) {
@@ -778,6 +1034,7 @@ function createFallbackStyles() {
             .notification.warning { background: #fff3cd; border-color: #ffeaa7; color: #856404; }
             .notification.error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
             .delivery-time-info .cost-formula { font-size: 12px; color: #6c757d; margin-top: 5px; }
+            .whatsapp-submit-btn:hover { background: #128C7E; transform: scale(1.02); transition: all 0.2s; }
             @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         `;
         document.head.appendChild(style);
@@ -792,7 +1049,9 @@ window.setupStaticMap = setupStaticMap;
 window.calculateDeliveryFromAddress = calculateDeliveryFromAddress;
 window.updateDeliveryInfo = updateDeliveryInfo;
 window.initMapSystem = initMapSystem;
-window.geocodeAddress = geocodeAddress; // Para debug
+window.geocodeAddress = geocodeAddress;
+window.generarUrlUbicacion = generarUrlUbicacion;
+window.agregarUbicacionAlMensajeWhatsApp = agregarUbicacionAlMensajeWhatsApp;
 
 // ============================================
 // AUTO-INICIALIZACIÓN
