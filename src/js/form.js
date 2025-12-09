@@ -1,7 +1,8 @@
-// form.js - VERSIÓN FINAL CON CARRITO REAL
+// form.js - VERSIÓN ACTUALIZADA CON MAPA SEPARADO
 
 const FORM_CONFIG = {
     phonePattern: /^[0-9]{10,15}$/,
+    // Nota: defaultDeliveryCost ahora será dinámico desde map.js
     defaultDeliveryCost: 300,
     businessLocation: {
         address: "Av. Roque Sáenz Peña, Córdoba Capital, Córdoba", 
@@ -11,7 +12,7 @@ const FORM_CONFIG = {
     }
 };
 
-console.log("✅ form.js cargado");
+console.log("✅ form.js cargado - Versión con mapa separado");
 
 // ============================================
 // CONEXIÓN CON EL CARRITO REAL
@@ -56,18 +57,26 @@ function getCarritoActual() {
 }
 
 // ============================================
-// FUNCIONES PRINCIPALES
+// FUNCIONES PRINCIPALES (SIMPLIFICADAS)
 // ============================================
 
-// Configurar mapa
+// Configurar mapa (ahora usa función de map.js)
 function setupMap() {
-    console.log("🗺️ Configurando mapa...");
+    console.log("🗺️ Configurando mapa a través de map.js...");
     
-    const mapFrame = document.getElementById('map-frame');
-    if (!mapFrame) {
-        console.error("❌ #map-frame no encontrado");
-        return;
+    // Si map.js está cargado, usar su función
+    if (typeof window.setupStaticMap === 'function') {
+        window.setupStaticMap();
+    } else {
+        console.warn("⚠️ map.js no cargado, usando fallback");
+        setupMapFallback();
     }
+}
+
+// Fallback si map.js no se carga
+function setupMapFallback() {
+    const mapFrame = document.getElementById('map-frame');
+    if (!mapFrame) return;
     
     const lat = FORM_CONFIG.businessLocation.lat;
     const lng = FORM_CONFIG.businessLocation.lng;
@@ -85,13 +94,12 @@ function setupMap() {
         </iframe>
     `;
     
-    console.log("✅ Mapa configurado");
+    console.log("✅ Mapa fallback configurado");
 }
 
 // Calcular subtotal (usa el carrito real)
 function calculateSubtotal() {
     const carrito = getCarritoActual();
-    console.log("🧮 Calculando subtotal de", carrito.length, "productos...");
     
     const subtotal = carrito.reduce((total, item) => {
         const precio = item.price || 0;
@@ -99,25 +107,42 @@ function calculateSubtotal() {
         return total + (precio * cantidad);
     }, 0);
     
-    console.log("   - Subtotal: $", subtotal);
     return subtotal;
 }
 
-// Validar formulario (usa el carrito real)
+// Actualizar total considerando envío dinámico
+function updateOrderSummary() {
+    const subtotal = calculateSubtotal();
+    const subtotalElement = document.getElementById('subtotal');
+    const totalElement = document.getElementById('total-cost');
+    
+    if (subtotalElement) {
+        subtotalElement.textContent = `$${subtotal}`;
+    }
+    
+    if (totalElement) {
+        // Obtener costo de envío actual
+        const deliveryElement = document.getElementById('delivery-cost');
+        const deliveryCost = deliveryElement ? 
+            parseInt(deliveryElement.textContent.replace('$', '')) || 
+            FORM_CONFIG.defaultDeliveryCost : 
+            FORM_CONFIG.defaultDeliveryCost;
+        
+        totalElement.textContent = `$${subtotal + deliveryCost}`;
+    }
+}
+
+// Validar formulario
 function validateForm() {
     console.log("🔍 Validando formulario...");
     
     // 1. Verificar carrito
     const carrito = getCarritoActual();
-    console.log("   - Productos en carrito:", carrito.length);
     
     if (carrito.length === 0) {
-        console.log("❌ Carrito vacío");
         alert("❌ Agrega productos al carrito antes de completar el pedido");
         return false;
     }
-    
-    console.log("✅ Carrito OK");
     
     // 2. Verificar campos mínimos requeridos
     const campos = [
@@ -137,7 +162,6 @@ function validateForm() {
         if (elemento) {
             const valor = elemento.value.trim();
             if (!valor) {
-                console.log(`❌ Campo ${campo.nombre} vacío`);
                 if (!primerCampoVacio) primerCampoVacio = elemento;
                 camposValidos = false;
                 elemento.style.borderColor = '#dc3545';
@@ -153,12 +177,18 @@ function validateForm() {
         return false;
     }
     
-    console.log("✅ Todos los campos están completos");
+    // 3. Verificar que el envío esté disponible
+    const deliveryElement = document.getElementById('delivery-cost');
+    if (deliveryElement && deliveryElement.textContent === "Consultar") {
+        alert("❌ La dirección está fuera de zona de cobertura. Modifica la dirección o consulta disponibilidad.");
+        return false;
+    }
+    
     return true;
 }
 
 // Procesar pedido (genera mensaje detallado)
-function processOrder() {
+async function processOrder() {
     console.log("📞 Procesando pedido para WhatsApp...");
     
     if (!validateForm()) {
@@ -183,8 +213,21 @@ function processOrder() {
     
     // Calcular totales
     const subtotal = calculateSubtotal();
-    const envio = FORM_CONFIG.defaultDeliveryCost;
+    const deliveryElement = document.getElementById('delivery-cost');
+    const envio = deliveryElement ? 
+        parseInt(deliveryElement.textContent.replace('$', '')) || 
+        FORM_CONFIG.defaultDeliveryCost : 
+        FORM_CONFIG.defaultDeliveryCost;
     const total = subtotal + envio;
+    
+    // Obtener info de envío si está disponible
+    let infoEnvio = "";
+    const deliveryDetails = document.querySelector('.delivery-info');
+    if (deliveryDetails) {
+        const distancia = deliveryDetails.querySelector('strong')?.textContent || "";
+        const tiempo = deliveryDetails.querySelectorAll('strong')[1]?.textContent || "";
+        infoEnvio = `📏 Distancia: ${distancia} | ⏱️ Tiempo: ${tiempo}\n`;
+    }
     
     // Generar mensaje detallado para WhatsApp
     let mensaje = `📋 *NUEVO PEDIDO - COMIDAS AMICI*\n\n`;
@@ -192,6 +235,7 @@ function processOrder() {
     mensaje += `👤 *CLIENTE:* ${nombre}\n`;
     mensaje += `📱 *WHATSAPP:* ${telefono}\n`;
     mensaje += `📍 *DIRECCIÓN DE ENTREGA:*\n${direccion}\n`;
+    mensaje += `${infoEnvio}`;
     
     if (notas) {
         mensaje += `📝 *NOTAS:* ${notas}\n`;
@@ -210,20 +254,17 @@ function processOrder() {
         mensaje += `${index + 1}. *${nombreProducto}* x${cantidad}\n`;
         mensaje += `   Precio unitario: $${precio}\n`;
         
-        // Mostrar salsas si tiene
         if (item.sauces && item.sauces.length > 0) {
             const salsas = item.sauces.map(s => s.name).join(', ');
             mensaje += `   🧂 Salsas: ${salsas}\n`;
         }
         
-        // Mostrar extras si tiene
         if (item.generalExtras && item.generalExtras.length > 0) {
             item.generalExtras.forEach(extra => {
                 mensaje += `   ➕ ${extra.name} x${extra.quantity || 1}\n`;
             });
         }
         
-        // Mostrar notas del producto
         if (item.notes) {
             mensaje += `   📝 Notas: ${item.notes}\n`;
         }
@@ -239,7 +280,7 @@ function processOrder() {
     mensaje += `*TOTAL A PAGAR: $${total}*\n\n`;
     
     mensaje += `⏰ *INFORMACIÓN IMPORTANTE:*\n`;
-    mensaje += `• Tiempo estimado de entrega: 45-60 minutos\n`;
+    mensaje += `• Tiempo estimado de entrega: según cálculo\n`;
     mensaje += `• Aceptamos efectivo, transferencia y Mercado Pago\n`;
     mensaje += `• Para cambios o cancelaciones, contactar dentro de los 10 minutos\n\n`;
     
@@ -271,7 +312,7 @@ function processOrder() {
 function initForm() {
     console.log("🔄 Inicializando sistema de pedidos...");
     
-    // Configurar mapa
+    // Configurar mapa (ahora separado)
     setupMap();
     
     // Configurar evento del formulario
@@ -290,33 +331,28 @@ function initForm() {
     // Mostrar estado actual del carrito
     const carrito = getCarritoActual();
     console.log("📦 Estado del carrito:", carrito.length, "productos");
-    console.log("💰 Subtotal actual: $", calculateSubtotal());
+    
+    // Actualizar resumen inicial
+    updateOrderSummary();
 }
 
 // ============================================
 // HACER FUNCIONES GLOBALES
 // ============================================
 
-// Exportar funciones principales
 window.calculateSubtotal = calculateSubtotal;
 window.validateForm = validateForm;
 window.processOrder = processOrder;
 window.getCarritoActual = getCarritoActual;
-
-// Sincronizar selectedItems con el sistema global
-if (typeof selectedItems !== 'undefined') {
-    window.selectedItems = selectedItems;
-}
+window.updateOrderSummary = updateOrderSummary;
 
 // ============================================
 // AUTO-INICIALIZACIÓN
 // ============================================
 
-// Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initForm);
 } else {
-    // Si ya está cargado, inicializar con un pequeño delay
     setTimeout(initForm, 100);
 }
 

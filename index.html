@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comidas AMICI - Pedidos por WhatsApp</title>
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"> -->
-    <!-- <link rel="stylesheet" href="./assets/fontawesome/css/all.min.css"> -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <!-- CSS Propio -->
     <link rel="stylesheet" href="./src/css/styles.css">
     <link rel="stylesheet" href="./src/css/extras.css">
     <link rel="stylesheet" href="./src/css/form.css">
+    <link rel="stylesheet" href="./src/css/map.css">
 </head>
 <body>
     <header>
@@ -91,6 +93,8 @@
                 </div>
             </div>
             
+            <!-- Aquí se insertará automáticamente delivery-details -->
+            
             <div class="order-summary">
                 <div class="summary-row">
                     <span>Subtotal:</span>
@@ -160,6 +164,8 @@
                         <input type="text" id="customer-neighborhood" class="address-input" placeholder="Nombre del barrio" required>
                     </div>
                 </div>
+                
+                <!-- Aquí se insertará automáticamente delivery-time-info -->
                 
                 <div class="form-group">
                     <label class="form-label" for="order-notes">
@@ -263,17 +269,21 @@
         <i class="fas fa-chevron-up"></i>
     </button>
 
+    <!-- SCRIPTS - IMPORTANTE: ORDEN CORRECTO -->
     <script src="./src/js/main.js"></script>
     <script src="./src/js/extras.js"></script>
+    <!-- NUEVO: Sistema de mapas y cálculo de rutas -->
+    <script src="./src/js/map.js"></script>
+    <!-- Sistema de formulario (depende de map.js) -->
     <script src="./src/js/form.js"></script>
     
     <script>
         // Inicializar cuando el DOM esté cargado
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar formulario y mapa
-            if (typeof initFormAndMap === 'function') {
-                initFormAndMap();
-            }
+            console.log("🚀 Iniciando aplicación completa");
+            
+            // Los scripts se inicializan automáticamente
+            // main.js, extras.js, map.js y form.js tienen auto-inicialización
         });
     </script>
 </body>
