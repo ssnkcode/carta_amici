@@ -519,7 +519,7 @@ async function processOrder() {
     
     mensaje += `¡Gracias por tu pedido! 🍕`;
     
-    const telefonoNegocio = '5493513707738';
+    const telefonoNegocio = '5493541682310';
     const mensajeCodificado = encodeURIComponent(mensaje);
     const urlWhatsApp = `https://wa.me/${telefonoNegocio}?text=${mensajeCodificado}`;
     
