@@ -14,21 +14,36 @@ async function loadProducts() {
         const response = await fetch('./src/products/products.json');
         const data = await response.json();
         
-        foodItems = data.productos.map((item, index) => ({
-            id: index + 1,
-            name: item.titulo,
-            description: item.descripcion || "",
-            price: item.precio,
-            category: item.category.toLowerCase(),
-            image: item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80"
-        }));
+        const excludedFlavors = ["1/2 Docena", "Unidad", "2 x Fritas (Saladas)"];
+        
+        const empanadaFlavors = data.productos
+            .filter(item => item.category === "Empanadas" && !excludedFlavors.includes(item.titulo))
+            .map(item => item.titulo);
+
+        foodItems = data.productos.map((item, index) => {
+            let itemFlavors = [];
+            
+            if (item.category === "Empanadas" && (item.titulo === "Unidad" || item.titulo === "1/2 Docena")) {
+                itemFlavors = empanadaFlavors;
+            }
+
+            return {
+                id: index + 1,
+                name: item.titulo,
+                description: item.descripcion || "",
+                price: item.precio,
+                category: item.category.toLowerCase(),
+                image: item.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80",
+                flavors: itemFlavors
+            };
+        });
 
         renderFoodItems();
         
     } catch (error) {
-        console.error("Error cargando productos:", error);
+        console.error(error);
         const foodGrid = document.getElementById('food-grid');
-        foodGrid.innerHTML = '<p class="error-msg">Error al cargar el menú. Por favor intenta más tarde.</p>';
+        foodGrid.innerHTML = '<p class="error-msg">Error al cargar el menú.</p>';
     }
 }
 
@@ -157,6 +172,15 @@ function renderSelectedItems() {
                     <span class="item-unit-price">($${item.price} c/u)</span>
                 </div>
                 
+                ${item.empandasFlavors && item.empandasFlavors.length > 0 ? `
+                    <div class="cart-flavors">
+                        <div class="cart-extras-title">Gustos:</div>
+                        <ul class="flavors-list">
+                            ${item.empandasFlavors.map(f => `<li>• ${f}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+
                 ${item.notes ? `<div class="cart-product-notes">📝 ${item.notes}</div>` : ''}
                 
                 ${(item.sauces && item.sauces.length > 0 || item.generalExtras && item.generalExtras.length > 0) ? `
@@ -274,13 +298,13 @@ function updateOrderSummary() {
         }, 0);
     
     const subtotal = foodSubtotal + globalExtrasSubtotal;
-    const deliveryCost = 300;
-    let total = subtotal + deliveryCost;
     
     const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
     const discountRow = document.getElementById('discount-row');
     const discountAmountElem = document.getElementById('discount-amount');
     
+    let total = subtotal;
+
     if (paymentMethod === 'efectivo') {
         const discount = Math.round(total * 0.10);
         total = total - discount;
@@ -293,11 +317,10 @@ function updateOrderSummary() {
     }
     
     const subtotalElement = document.getElementById('subtotal');
-    const deliveryElement = document.getElementById('delivery-cost');
     const totalElement = document.getElementById('total-cost');
     
     if (subtotalElement) subtotalElement.textContent = `$${subtotal}`;
-    if (deliveryElement) deliveryElement.textContent = `$${deliveryCost}`;
+    
     if (totalElement) totalElement.textContent = `$${total}`;
 
     const floatBtn = document.getElementById('floating-cart-btn');
@@ -306,12 +329,136 @@ function updateOrderSummary() {
 
     if(selectedItems.length > 0) {
         const totalQty = selectedItems.reduce((acc, item) => acc + item.quantity, 0);
-        floatCount.textContent = totalQty;
-        floatTotal.textContent = `$${total}`;
-        floatBtn.classList.add('visible');
+        if (floatCount) floatCount.textContent = totalQty;
+        if (floatTotal) floatTotal.textContent = `$${total}`;
+        if (floatBtn) floatBtn.classList.add('visible');
     } else {
-        floatBtn.classList.remove('visible');
+        if (floatBtn) floatBtn.classList.remove('visible');
     }
+}
+
+function addToCart(id) {
+    const foodItem = foodItems.find(item => item.id === id);
+    if (!foodItem) return;
+    
+    const quantityInput = document.getElementById(`qty-${id}`);
+    const quantityToAdd = parseInt(quantityInput.value) || 1;
+    
+    const isEmpanada = foodItem.category === 'empanadas';
+    const isUnit = isEmpanada && foodItem.name.toLowerCase().includes('unidad');
+    const isHalfDozen = isEmpanada && foodItem.name.toLowerCase().includes('1/2');
+    
+    let empandasFlavors = [];
+    
+    if (isEmpanada) {
+        if (isUnit) {
+            const flavors = window.getEmpanadaSelection(id, true, false);
+            if (!flavors || flavors.length === 0) {
+                showNotification("⚠️ Debes seleccionar 1 gusto para la empanada", "error");
+                const toggleBtn = document.querySelector(`.extras-toggle-btn[data-product-id="${id}"]`);
+                if (toggleBtn && !toggleBtn.classList.contains('expanded')) {
+                    toggleBtn.click();
+                }
+                return;
+            }
+            empandasFlavors = flavors;
+        } else if (isHalfDozen) {
+            const selection = window.getEmpanadaSelection(id, false, true);
+            
+            if (selection.totalCount !== 6) {
+                showNotification(`⚠️ Debes seleccionar exactamente 6 empanadas (llevas ${selection.totalCount})`, "error");
+                const toggleBtn = document.querySelector(`.extras-toggle-btn[data-product-id="${id}"]`);
+                if (toggleBtn && !toggleBtn.classList.contains('expanded')) {
+                    toggleBtn.click();
+                }
+                return;
+            }
+            empandasFlavors = selection.flavorsList;
+        }
+    }
+
+    const sauceCheckboxes = document.querySelectorAll(`.sauce-checkbox[data-product-id="${id}"]:checked`);
+    const selectedSauces = Array.from(sauceCheckboxes).map(checkbox => ({
+        name: checkbox.dataset.name,
+        price: parseInt(checkbox.dataset.price)
+    }));
+    
+    const generalExtras = document.querySelectorAll(`.general-extra-checkbox[data-product-id="${id}"]:checked`);
+    const selectedGeneralExtras = Array.from(generalExtras).map(checkbox => {
+        const quantityInput = document.getElementById(`extra-qty-${checkbox.dataset.extraId}`);
+        const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
+        
+        return {
+            id: checkbox.dataset.extraId,
+            name: checkbox.dataset.name,
+            price: parseInt(checkbox.dataset.price),
+            quantity: quantity
+        };
+    });
+    
+    const notesInput = document.getElementById(`product-notes-${id}`);
+    const productNotes = notesInput ? notesInput.value.trim() : '';
+    
+    const existingItemIndex = selectedItems.findIndex(item => 
+        item.id === id && 
+        JSON.stringify(item.sauces) === JSON.stringify(selectedSauces) &&
+        JSON.stringify(item.generalExtras) === JSON.stringify(selectedGeneralExtras) &&
+        JSON.stringify(item.empandasFlavors) === JSON.stringify(empandasFlavors) &&
+        item.notes === productNotes
+    );
+    
+    if (existingItemIndex >= 0) {
+        selectedItems[existingItemIndex].quantity += quantityToAdd;
+        showNotification(`Se agregaron ${quantityToAdd} más de ${foodItem.name}`, 'success');
+    } else {
+        const newItem = {
+            ...foodItem,
+            quantity: quantityToAdd,
+            sauces: selectedSauces,
+            generalExtras: selectedGeneralExtras,
+            empandasFlavors: empandasFlavors,
+            notes: productNotes
+        };
+        
+        selectedItems.push(newItem);
+        showNotification(`${foodItem.name} agregado al carrito`, 'success');
+    }
+    
+    resetProductControls(id);
+    quantityInput.value = 1;
+    
+    renderFoodItems();
+    renderSelectedItems();
+    updateOrderSummary();
+    saveToLocalStorage();
+}
+
+function resetProductControls(productId) {
+    document.querySelectorAll(`.sauce-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.parentElement.classList.remove('selected');
+    });
+    
+    document.querySelectorAll(`.general-extra-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.parentElement.classList.remove('selected');
+        const extraId = checkbox.dataset.extraId;
+        const qtyInput = document.getElementById(`extra-qty-${extraId}`);
+        if (qtyInput) qtyInput.value = 1;
+    });
+    
+    const notesInput = document.getElementById(`product-notes-${productId}`);
+    if (notesInput) notesInput.value = '';
+    
+    if (typeof window.resetEmpanadaSelection === 'function') {
+        window.resetEmpanadaSelection(productId);
+    }
+    
+    const toggleBtn = document.querySelector(`.extras-toggle-btn[data-product-id="${productId}"]`);
+    const extrasContainer = document.getElementById(`extras-container-${productId}`);
+    
+    if (toggleBtn) toggleBtn.classList.remove('expanded');
+    if (extrasContainer) extrasContainer.classList.remove('expanded');
 }
 
 function setupEventListeners() {
@@ -404,10 +551,10 @@ function showNotification(text, type = 'success') {
     notificationText.textContent = text;
     
     notification.className = 'notification';
-    notification.classList.add(type === 'error' ? 'error' : 'show');
+    notification.classList.add(type === 'error' ? 'error' : (type === 'warning' ? 'warning' : 'show'));
     notification.classList.add('show');
     
-    const hideTime = type === 'error' ? 5000 : 3000;
+    const hideTime = type === 'error' || type === 'warning' ? 5000 : 3000;
     setTimeout(() => {
         notification.classList.remove('show');
     }, hideTime);

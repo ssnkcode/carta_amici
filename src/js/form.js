@@ -1,8 +1,5 @@
-// form.js - VERSIÓN ACTUALIZADA CON MAPA SEPARADO Y UBICACIÓN GOOGLE MAPS
-
 const FORM_CONFIG = {
     phonePattern: /^[0-9]{10,15}$/,
-    // Nota: defaultDeliveryCost ahora será dinámico desde map.js
     defaultDeliveryCost: 300,
     businessLocation: {
         address: "Av. Roque Sáenz Peña, Córdoba Capital, Córdoba", 
@@ -12,40 +9,19 @@ const FORM_CONFIG = {
     }
 };
 
-console.log("✅ form.js cargado - Versión con mapa separado y Google Maps");
-
-// ============================================
-// CONEXIÓN CON EL CARRITO REAL
-// ============================================
-
-// 1. SINCRONIZAR CON EL CARRITO EXISTENTE
-console.log("🔗 Conectando con el carrito real...");
-
-// Verificar si selectedItems existe (la variable global real)
 if (typeof selectedItems !== 'undefined') {
-    // La variable selectedItems ya existe globalmente (sin window)
-    console.log("✓ Carrito encontrado en variable global 'selectedItems'");
-    console.log("  - Productos:", selectedItems.length);
-    console.log("  - Detalles:", selectedItems.map(p => `${p.name} x${p.quantity}`));
-    
-    // Crear alias para compatibilidad
     window.selectedItems = selectedItems;
 } else {
-    console.warn("⚠️ Variable selectedItems no encontrada");
     window.selectedItems = [];
 }
 
-// 2. Función para obtener siempre el carrito actual
 function getCarritoActual() {
-    // Primero intentar con la variable global
     if (typeof selectedItems !== 'undefined' && Array.isArray(selectedItems)) {
         return selectedItems;
     }
-    // Luego con window.selectedItems
     if (window.selectedItems && Array.isArray(window.selectedItems)) {
         return window.selectedItems;
     }
-    // Finalmente con localStorage
     try {
         const saved = localStorage.getItem('deliciasExpress_selectedItems');
         if (saved) {
@@ -56,66 +32,39 @@ function getCarritoActual() {
     return [];
 }
 
-// ============================================
-// FUNCIÓN PARA GENERAR UBICACIÓN GOOGLE MAPS
-// ============================================
-
 function generarUbicacionGoogleMaps() {
     try {
-        // Obtener datos del formulario
         const calle = document.getElementById('customer-street')?.value.trim() || '';
         const numero = document.getElementById('customer-number')?.value.trim() || '';
-        const barrio = document.getElementById('customer-neighborhood')?.value.trim() || '';
         const ciudad = document.getElementById('customer-city')?.value.trim() || '';
         
         if (!calle || !numero || !ciudad) {
-            console.warn("⚠️ Faltan datos para generar ubicación");
             return null;
         }
         
-        // Construir dirección completa
-        let direccionCompleta = `${calle} ${numero}`;
-        if (barrio) direccionCompleta += `, ${barrio}`;
-        direccionCompleta += `, ${ciudad}, Córdoba, Argentina`;
-        
-        // Codificar para URL
-        const direccionCodificada = encodeURIComponent(direccionCompleta);
-        
-        // Generar URL de Google Maps
+        const direccionParaMapa = `${calle} ${numero}, ${ciudad}, Córdoba, Argentina`;
+        const direccionCodificada = encodeURIComponent(direccionParaMapa);
         const urlGoogleMaps = `https://www.google.com/maps/search/?api=1&query=${direccionCodificada}`;
-        
-        console.log("📍 Ubicación de Google Maps generada:", urlGoogleMaps);
         
         return {
             texto: `📍 *UBICACIÓN EN GOOGLE MAPS:*\n${urlGoogleMaps}`,
-            url: urlGoogleMaps,
-            direccion: direccionCompleta
+            url: urlGoogleMaps
         };
         
     } catch (error) {
-        console.error("❌ Error generando ubicación:", error);
+        console.error(error);
         return null;
     }
 }
 
-// ============================================
-// FUNCIONES PRINCIPALES (SIMPLIFICADAS)
-// ============================================
-
-// Configurar mapa (ahora usa función de map.js)
 function setupMap() {
-    console.log("🗺️ Configurando mapa a través de map.js...");
-    
-    // Si map.js está cargado, usar su función
     if (typeof window.setupStaticMap === 'function') {
         window.setupStaticMap();
     } else {
-        console.warn("⚠️ map.js no cargado, usando fallback");
         setupMapFallback();
     }
 }
 
-// Fallback si map.js no se carga
 function setupMapFallback() {
     const mapFrame = document.getElementById('map-frame');
     if (!mapFrame) return;
@@ -132,61 +81,134 @@ function setupMapFallback() {
             style="border:none;"
             allowfullscreen
             loading="lazy"
-            title="Comidas AMICI - ${FORM_CONFIG.businessLocation.address}">
+            title="Ubicación del Negocio">
         </iframe>
     `;
-    
-    console.log("✅ Mapa fallback configurado");
 }
 
-// Calcular subtotal (usa el carrito real)
 function calculateSubtotal() {
     const carrito = getCarritoActual();
+    
+    if (!carrito || carrito.length === 0) {
+        return 0;
+    }
     
     const subtotal = carrito.reduce((total, item) => {
         const precio = item.price || 0;
         const cantidad = item.quantity || 1;
-        return total + (precio * cantidad);
+        
+        const saucesTotal = item.sauces ? item.sauces.reduce((sum, s) => sum + s.price, 0) : 0;
+        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, e) => sum + (e.price * e.quantity), 0) : 0;
+        
+        return total + ((precio * cantidad) + saucesTotal + generalExtrasTotal);
     }, 0);
     
     return subtotal;
 }
 
-// Actualizar total considerando envío dinámico
+function calculateGlobalExtras() {
+    let totalExtras = 0;
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(.cart-item-check)');
+    
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            if (cb.dataset.price) {
+                totalExtras += parseInt(cb.dataset.price) || 0;
+            } else {
+                if (cb.id.includes('cubiertos')) totalExtras += 50;
+                if (cb.id.includes('salsas')) totalExtras += 100;
+                if (cb.id.includes('servilletas')) totalExtras += 30;
+            }
+        }
+    });
+    
+    return totalExtras;
+}
+
 function updateOrderSummary() {
     const subtotal = calculateSubtotal();
+    const globalExtras = calculateGlobalExtras();
+    const totalBase = subtotal + globalExtras;
+    
     const subtotalElement = document.getElementById('subtotal');
     const totalElement = document.getElementById('total-cost');
+    const deliveryElement = document.getElementById('delivery-cost');
     
+    // 1. Mostrar Subtotal (siempre visible)
     if (subtotalElement) {
-        subtotalElement.textContent = `$${subtotal}`;
+        subtotalElement.textContent = `$${totalBase}`;
     }
+
+    // 2. Verificar si la dirección está completa
+    const calle = document.getElementById('customer-street')?.value.trim();
+    const numero = document.getElementById('customer-number')?.value.trim();
+    const ciudad = document.getElementById('customer-city')?.value.trim();
+    const addressComplete = calle && numero && ciudad;
+
+    // 3. ESTADO A: Dirección Incompleta (Prioridad sobre todo, incluso si es $0)
+    if (!addressComplete) {
+        if (deliveryElement) {
+            deliveryElement.textContent = "A calcular";
+            deliveryElement.className = 'delivery-cost-warning';
+            deliveryElement.dataset.cost = "0"; 
+        }
+        if (totalElement) {
+            totalElement.innerHTML = `$${totalBase} <span style="font-size: 0.7em; color: #dc3545;">+ Envío</span>`;
+        }
+        return; // Salimos aquí para mantener el estado "A calcular"
+    }
+
+    // 4. ESTADO B: Dirección Completa - Intentar obtener costo calculado
+    let deliveryCost = 0;
+    let hasCalculatedDelivery = false;
+    let isCalculating = false;
     
+    if (deliveryElement) {
+        if (deliveryElement.dataset.calculating === "true") {
+            isCalculating = true;
+        } else if (deliveryElement.dataset.cost) {
+            deliveryCost = parseInt(deliveryElement.dataset.cost) || 0;
+            // Consideramos calculado si tiene costo o si es explícitamente 0 (gratis)
+            // pero NO si el texto sigue diciendo "A calcular" por algún error
+            if (!deliveryElement.textContent.includes("A calcular")) {
+                hasCalculatedDelivery = true;
+            }
+        } else {
+            const rawText = deliveryElement.textContent;
+            if (rawText.includes('$') && /\d/.test(rawText)) {
+                deliveryCost = parseInt(rawText.replace(/[^0-9]/g, '')) || 0;
+                hasCalculatedDelivery = true;
+            }
+        }
+    }
+
+    // 5. Renderizar Total Final basado en estado de cálculo
     if (totalElement) {
-        // Obtener costo de envío actual
-        const deliveryElement = document.getElementById('delivery-cost');
-        const deliveryCost = deliveryElement ? 
-            parseInt(deliveryElement.textContent.replace('$', '')) || 
-            FORM_CONFIG.defaultDeliveryCost : 
-            FORM_CONFIG.defaultDeliveryCost;
-        
-        totalElement.textContent = `$${subtotal + deliveryCost}`;
+        if (isCalculating) {
+             totalElement.innerHTML = `$${totalBase} <span style="font-size: 0.7em; color: #666;">+ Calculando...</span>`;
+        } else if (hasCalculatedDelivery) {
+            const totalFinal = totalBase + deliveryCost;
+            totalElement.textContent = `$${totalFinal}`;
+            totalElement.style.color = "#000";
+        } else {
+            // Fallback si hay dirección pero falló el cálculo
+            totalElement.innerHTML = `$${totalBase} <span style="font-size: 0.7em; color: #dc3545;">+ Envío</span>`;
+            if (deliveryElement && !isCalculating) {
+                deliveryElement.textContent = "A calcular";
+                deliveryElement.className = 'delivery-cost-warning';
+            }
+        }
     }
 }
 
-// Validar formulario
 function validateForm() {
-    console.log("🔍 Validando formulario...");
-    
-    // 1. Verificar carrito
     const carrito = getCarritoActual();
     
     if (carrito.length === 0) {
-        alert("❌ Agrega productos al carrito antes de completar el pedido");
+        showCustomAlert("❌ El carrito está vacío", "Agrega productos antes de continuar.");
         return false;
     }
     
-    // 2. Verificar campos mínimos requeridos
     const campos = [
         {id: 'customer-name', nombre: 'nombre'},
         {id: 'customer-phone', nombre: 'WhatsApp'},
@@ -215,30 +237,127 @@ function validateForm() {
     
     if (!camposValidos && primerCampoVacio) {
         primerCampoVacio.focus();
-        alert("❌ Completa todos los campos requeridos");
-        return false;
-    }
-    
-    // 3. Verificar que el envío esté disponible
-    const deliveryElement = document.getElementById('delivery-cost');
-    if (deliveryElement && deliveryElement.textContent === "Consultar") {
-        alert("❌ La dirección está fuera de zona de cobertura. Modifica la dirección o consulta disponibilidad.");
+        showCustomAlert("❌ Campos incompletos", "Por favor completa todos los campos requeridos.");
         return false;
     }
     
     return true;
 }
 
-// Procesar pedido (genera mensaje detallado CON UBICACIÓN)
-async function processOrder() {
-    console.log("📞 Procesando pedido para WhatsApp...");
+function createOrderModal() {
+    if (document.getElementById('order-confirm-modal')) return;
+
+    const modalHTML = `
+        <div id="order-confirm-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-icon">📋</div>
+                <h3>Confirmar Pedido</h3>
+                <div id="order-modal-details" style="text-align: left; margin: 15px 0; font-size: 0.9rem; color: #555; background: #f9f9f9; padding: 15px; border-radius: 8px;">
+                    </div>
+                <div class="modal-actions">
+                    <button id="btn-cancel-order" class="modal-btn cancel">Cancelar</button>
+                    <button id="btn-confirm-order" class="modal-btn confirm">Enviar a WhatsApp</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function createAlertModal() {
+    if (document.getElementById('custom-alert-modal')) return;
+
+    const modalHTML = `
+        <div id="custom-alert-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-icon warning" id="alert-icon">⚠️</div>
+                <h3 id="alert-title">Atención</h3>
+                <p id="alert-message"></p>
+                <div class="modal-actions">
+                    <button id="btn-close-alert" class="modal-btn confirm">Entendido</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
     
+    document.getElementById('btn-close-alert').addEventListener('click', () => {
+        document.getElementById('custom-alert-modal').classList.remove('active');
+    });
+}
+
+function showCustomAlert(title, message) {
+    createAlertModal();
+    document.getElementById('alert-title').textContent = title;
+    document.getElementById('alert-message').textContent = message;
+    document.getElementById('custom-alert-modal').classList.add('active');
+}
+
+function showOrderConfirmation(details) {
+    createOrderModal();
+    const modal = document.getElementById('order-confirm-modal');
+    const content = document.getElementById('order-modal-details');
+    const btnConfirm = document.getElementById('btn-confirm-order');
+    const btnCancel = document.getElementById('btn-cancel-order');
+    
+    content.innerHTML = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>Subtotal Productos:</span> <span>$${details.subtotal}</span>
+        </div>
+        ${details.extras > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>Adicionales Generales:</span> <span>$${details.extras}</span>
+        </div>` : ''}
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>Envío a ${details.barrio}:</span> <span>$${details.envio}</span>
+        </div>
+        ${details.descuento > 0 ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #2ecc71;">
+            <span>Descuento (Efectivo):</span> <span>-$${details.descuento}</span>
+        </div>` : ''}
+        <div style="border-top: 1px dashed #ccc; margin: 10px 0;"></div>
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; color: #000;">
+            <span>TOTAL FINAL:</span> <span>$${details.total}</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.8rem; text-align: center; color: #888;">
+            Tiempo estimado: ${details.tiempo}
+        </div>
+    `;
+
+    return new Promise((resolve) => {
+        modal.classList.add('active');
+        
+        const handleConfirm = () => {
+            modal.classList.remove('active');
+            cleanup();
+            resolve(true);
+        };
+        
+        const handleCancel = () => {
+            modal.classList.remove('active');
+            cleanup();
+            resolve(false);
+        };
+        
+        const cleanup = () => {
+            btnConfirm.removeEventListener('click', handleConfirm);
+            btnCancel.removeEventListener('click', handleCancel);
+        };
+
+        btnConfirm.addEventListener('click', handleConfirm);
+        btnCancel.addEventListener('click', handleCancel);
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) handleCancel();
+        });
+    });
+}
+
+async function processOrder() {
     if (!validateForm()) {
-        console.log("❌ Validación fallida");
         return;
     }
     
-    // Obtener datos del formulario
     const nombre = document.getElementById('customer-name').value.trim();
     const telefono = document.getElementById('customer-phone').value.trim();
     const ciudad = document.getElementById('customer-city').value.trim();
@@ -246,62 +365,101 @@ async function processOrder() {
     const numero = document.getElementById('customer-number').value.trim();
     const barrio = document.getElementById('customer-neighborhood').value.trim();
     const notas = document.getElementById('order-notes')?.value.trim() || '';
+    const metodoPago = document.querySelector('input[name="payment-method"]:checked')?.value || 'Efectivo';
     
-    // Construir dirección completa
-    const direccion = `${calle} ${numero}, ${barrio}, ${ciudad}`;
+    const direccionCompleta = `${calle} ${numero}, ${barrio}, ${ciudad}`;
     
-    // Obtener carrito actual
-    const carrito = getCarritoActual();
+    let costoEnvio = 0;
+    let tiempoEstimado = "Consultar";
     
-    const subtotal = calculateSubtotal();
     const deliveryElement = document.getElementById('delivery-cost');
-    const envio = deliveryElement ? 
-        parseInt(deliveryElement.textContent.replace('$', '')) || 
-        FORM_CONFIG.defaultDeliveryCost : 
-        FORM_CONFIG.defaultDeliveryCost;
-    const total = subtotal + envio;
-    
-    // Obtener info de envío si está disponible
-    let infoEnvio = "";
-    const deliveryDetails = document.querySelector('.delivery-info');
-    if (deliveryDetails) {
-        const distancia = deliveryDetails.querySelector('strong')?.textContent || "";
-        const tiempo = deliveryDetails.querySelectorAll('strong')[1]?.textContent || "";
-        infoEnvio = `📏 Distancia: ${distancia} | ⏱️ Tiempo: ${tiempo}\n`;
+    if (deliveryElement) {
+        if (deliveryElement.dataset.cost) {
+            costoEnvio = parseInt(deliveryElement.dataset.cost) || 0;
+        } else if (deliveryElement.textContent.includes('$')) {
+            costoEnvio = parseInt(deliveryElement.textContent.replace(/[^0-9]/g, '')) || 0;
+        }
+    }
+
+    if (costoEnvio === 0 && typeof window.calculateDeliveryFromAddress === 'function') {
+        try {
+            const deliveryResult = await window.calculateDeliveryFromAddress(direccionCompleta);
+            if (deliveryResult && deliveryResult.dentroCobertura) {
+                costoEnvio = deliveryResult.costo;
+                tiempoEstimado = deliveryResult.tiempoEstimado || `${deliveryResult.duracionCalculada} min`;
+            }
+        } catch (error) {
+            console.error(error);
+        }
     }
     
-    // Generar mensaje detallado para WhatsApp
+    if (costoEnvio === 0) {
+         if (!confirm("No se pudo calcular el costo de envío exacto. Se coordinará por WhatsApp. ¿Deseas continuar?")) {
+             return;
+         }
+    }
+
+    const carrito = getCarritoActual();
+    const subtotal = calculateSubtotal();
+    const extras = calculateGlobalExtras();
+    
+    let total = subtotal + extras + costoEnvio;
+    let descuento = 0;
+    
+    if (metodoPago === 'efectivo') {
+        descuento = Math.round(total * 0.10); 
+        total = total - descuento;
+    }
+    
+    const confirmacion = await showOrderConfirmation({
+        subtotal: subtotal,
+        extras: extras,
+        envio: costoEnvio,
+        barrio: barrio,
+        descuento: descuento,
+        total: total,
+        tiempo: tiempoEstimado
+    });
+
+    if (!confirmacion) {
+        return;
+    }
+    
     let mensaje = `📋 *NUEVO PEDIDO - COMIDAS AMICI*\n\n`;
     
     mensaje += `👤 *CLIENTE:* ${nombre}\n`;
     mensaje += `📱 *WHATSAPP:* ${telefono}\n`;
-    mensaje += `📍 *DIRECCIÓN DE ENTREGA:*\n${direccion}\n`;
+    mensaje += `📍 *DIRECCIÓN DE ENTREGA:*\n${direccionCompleta}\n`;
     
-    // AGREGAR UBICACIÓN DE GOOGLE MAPS (NUEVO - NO DUPLICA)
     const ubicacion = generarUbicacionGoogleMaps();
     if (ubicacion && ubicacion.texto) {
         mensaje += `${ubicacion.texto}\n`;
     }
     
-    mensaje += `${infoEnvio}`;
+    mensaje += `⏱️ Tiempo estimado: ${tiempoEstimado}\n`;
     
     if (notas) {
-        mensaje += `📝 *NOTAS:* ${notas}\n`;
+        mensaje += `📝 *NOTAS DEL PEDIDO:* ${notas}\n`;
     }
     
     mensaje += `\n🛒 *DETALLE DEL PEDIDO:*\n`;
     mensaje += `══════════════════════════\n`;
     
-    // Listar productos
     carrito.forEach((item, index) => {
         const nombreProducto = item.name || 'Producto';
         const cantidad = item.quantity || 1;
         const precio = item.price || 0;
-        const totalItem = precio * cantidad;
+        
+        const saucesTotal = item.sauces ? item.sauces.reduce((sum, s) => sum + s.price, 0) : 0;
+        const generalExtrasTotal = item.generalExtras ? item.generalExtras.reduce((sum, e) => sum + (e.price * e.quantity), 0) : 0;
+        const totalItem = (precio * cantidad) + saucesTotal + generalExtrasTotal;
         
         mensaje += `${index + 1}. *${nombreProducto}* x${cantidad}\n`;
-        mensaje += `   Precio unitario: $${precio}\n`;
         
+        if (item.empandasFlavors && item.empandasFlavors.length > 0) {
+            mensaje += `   🥟 Gustos: ${item.empandasFlavors.join(', ')}\n`;
+        }
+
         if (item.sauces && item.sauces.length > 0) {
             const salsas = item.sauces.map(s => s.name).join(', ');
             mensaje += `   🧂 Salsas: ${salsas}\n`;
@@ -314,96 +472,90 @@ async function processOrder() {
         }
         
         if (item.notes) {
-            mensaje += `   📝 Notas: ${item.notes}\n`;
+            mensaje += `   📝 Nota producto: ${item.notes}\n`;
         }
         
         mensaje += `   Subtotal: $${totalItem}\n`;
         mensaje += `   ─────────────────\n`;
     });
+
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:not(.cart-item-check)');
+    let hasExtras = false;
+    let extrasMsg = `\n➕ *ADICIONALES GENERALES:*\n`;
+    
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            let name = cb.id; 
+            let price = 0;
+            if (cb.dataset.price) {
+                price = cb.dataset.price;
+                name = cb.dataset.name || cb.parentElement.innerText.split('$')[0].trim();
+            }
+            else if (cb.id.includes('cubiertos')) { name = 'Cubiertos'; price = 50; }
+            else if (cb.id.includes('salsas')) { name = 'Salsas'; price = 100; }
+            else if (cb.id.includes('servilletas')) { name = 'Servilletas'; price = 30; }
+            
+            if (price > 0) {
+                hasExtras = true;
+                extrasMsg += `   • ${name}: $${price}\n`;
+            }
+        }
+    });
+    
+    if (hasExtras) {
+        mensaje += extrasMsg;
+    }
     
     mensaje += `\n💰 *RESUMEN DE PAGO:*\n`;
     mensaje += `══════════════════════════\n`;
+    mensaje += `Método de pago: ${metodoPago.toUpperCase()}\n`;
     mensaje += `Subtotal productos: $${subtotal}\n`;
-    mensaje += `Costo de envío: $${envio}\n`;
+    if (extras > 0) mensaje += `Adicionales generales: $${extras}\n`;
+    mensaje += `Costo de envío: $${costoEnvio}\n`;
+    if (descuento > 0) {
+        mensaje += `Descuento (10% Efectivo): -$${descuento}\n`;
+    }
     mensaje += `*TOTAL A PAGAR: $${total}*\n\n`;
-    
-    mensaje += `⏰ *INFORMACIÓN IMPORTANTE:*\n`;
-    mensaje += `• Tiempo estimado de entrega: según cálculo\n`;
-    mensaje += `• Aceptamos efectivo, transferencia y Mercado Pago\n`;
-    mensaje += `• Para cambios o cancelaciones, contactar dentro de los 10 minutos\n\n`;
     
     mensaje += `¡Gracias por tu pedido! 🍕`;
     
-    console.log("📝 Mensaje generado CON UBICACIÓN (primeras 400 caracteres):");
-    console.log(mensaje.substring(0, 400) + "...");
-    
-    // Enviar por WhatsApp
-    const telefonoNegocio = '5493541682310';
+    const telefonoNegocio = '5493513707738';
     const mensajeCodificado = encodeURIComponent(mensaje);
     const urlWhatsApp = `https://wa.me/${telefonoNegocio}?text=${mensajeCodificado}`;
     
-    console.log("📤 Abriendo WhatsApp...");
     window.open(urlWhatsApp, '_blank');
-    
-    // Mostrar confirmación
-    if (typeof showNotification === 'function') {
-        showNotification('¡Pedido listo para enviar por WhatsApp!', 'success');
-    } else {
-        alert('✅ Pedido listo. Se abrirá WhatsApp en un momento...');
-    }
 }
 
-// ============================================
-// INICIALIZACIÓN
-// ============================================
-
 function initForm() {
-    console.log("🔄 Inicializando sistema de pedidos...");
-    
-    // Configurar mapa (ahora separado)
     setupMap();
+    createOrderModal();
+    createAlertModal();
     
-    // Configurar evento del formulario
     const formulario = document.getElementById('order-form');
     if (formulario) {
         formulario.addEventListener('submit', function(e) {
             e.preventDefault();
-            console.log("📋 Formulario enviado");
             processOrder();
         });
-        console.log("✅ Formulario configurado");
-    } else {
-        console.error("❌ No se encontró #order-form");
+
+        // Escuchar cambios en todo el formulario para actualizar totales
+        formulario.addEventListener('change', updateOrderSummary);
+        formulario.addEventListener('input', updateOrderSummary);
     }
     
-    // Mostrar estado actual del carrito
-    const carrito = getCarritoActual();
-    console.log("📦 Estado del carrito:", carrito.length, "productos");
-    
-    // Actualizar resumen inicial
     updateOrderSummary();
 }
 
-// ============================================
-// HACER FUNCIONES GLOBALES
-// ============================================
-
 window.calculateSubtotal = calculateSubtotal;
+window.calculateGlobalExtras = calculateGlobalExtras;
 window.validateForm = validateForm;
 window.processOrder = processOrder;
 window.getCarritoActual = getCarritoActual;
 window.updateOrderSummary = updateOrderSummary;
 window.generarUbicacionGoogleMaps = generarUbicacionGoogleMaps;
 
-// ============================================
-// AUTO-INICIALIZACIÓN
-// ============================================
-
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initForm);
 } else {
     setTimeout(initForm, 100);
 }
-
-console.log("✅ Sistema de pedidos listo CON UBICACIÓN GOOGLE MAPS");
-console.log("📊 Carrito detectado:", getCarritoActual().length, "productos");

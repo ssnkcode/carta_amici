@@ -1,40 +1,46 @@
-// map-core.js - Funciones principales de mapas y geolocalización
 console.log("🗺️ map-core.js cargado");
 
 const MAP_CONFIG = {
-    // Ubicación del negocio - Bialet Masse, Córdoba
     businessLocation: {
         lat: -31.342722,
         lng: -64.474847,
         address: "V. Roque Sáenz Peña, Bialet Masse, Córdoba, Argentina"
     },
     
-    // Configuración de OSM/OSRM
     osrmServer: 'https://router.project-osrm.org',
     nominatimServer: 'https://nominatim.openstreetmap.org',
     
-    // NUEVO: Costo por minuto de viaje
-    costoPorMinuto: 500, // $500 por cada minuto de viaje
+    costoPorMinuto: 500,
     
-    // Configuración de validación RELAJADA para pruebas
-    validationMode: 'flexible', // 'strict' o 'flexible'
-    defaultDistanceIfNotFound: 15, // km si no se encuentra la dirección
-    allowedCities: ['santa maría', 'cosquín', 'la falda', 'capilla del monte', 'bialet masse', 'cruz del eje', 'deán funes'],
+    validationMode: 'flexible',
+    defaultDistanceIfNotFound: 15,
+    allowedCities: [
+        'villa carlos paz', 'san antonio de arredondo', 'mayu sumaj', 'icho cruz', 'cuesta blanca', 
+        'tanti', 'cabalango', 'estancia vieja', 'villa santa cruz del lago', 'siquiman',
+        'bialet masse', 'santa maría', 'santa maria de punilla', 'cosquín', 'cosquin', 
+        'molinari', 'casa grande', 'valle hermoso', 'la falda', 'huerta grande', 
+        'villa giardino', 'la cumbre', 'los cocos', 'san esteban', 'capilla del monte', 
+        'charbonier', 'cruz del eje', 'deán funes'
+    ],
     
-    // Cache para evitar peticiones repetidas
     cache: new Map(),
-    cacheDuration: 30 * 60 * 1000 // 30 minutos
+    cacheDuration: 30 * 60 * 1000
 };
 
-// 1. Configurar mapa estático de OpenStreetMap
+function cleanAddressForSearch(texto) {
+    if (!texto) return '';
+    return texto
+        .replace(/\b(barrio|b°|b\.|bo\.)\s+/gi, '')
+        .replace(/\b(manzana|mz|mza)\s+\w+/gi, '')
+        .replace(/\b(lote|lt)\s+\w+/gi, '')
+        .replace(/\b(casa)\s+\w+/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 function setupStaticMap() {
-    console.log("🗺️ Configurando mapa estático OSM...");
-    
     const mapFrame = document.getElementById('map-frame');
-    if (!mapFrame) {
-        console.error("❌ #map-frame no encontrado");
-        return;
-    }
+    if (!mapFrame) return;
     
     const lat = MAP_CONFIG.businessLocation.lat;
     const lng = MAP_CONFIG.businessLocation.lng;
@@ -53,80 +59,75 @@ function setupStaticMap() {
             allowfullscreen
             loading="lazy"
             referrerpolicy="no-referrer-when-downgrade"
-            title="Ubicación Comidas AMICI - ${MAP_CONFIG.businessLocation.address}">
+            title="Ubicación Comidas AMICI">
         </iframe>
     `;
-    
-    console.log("✅ Mapa estático configurado para Bialet Masse");
 }
 
-// 2. Convertir dirección a coordenadas - VERSIÓN MEJORADA Y TOLERANTE
 async function geocodeAddress(direccion) {
-    console.log("📍 Geocodificando:", direccion);
-    
     const cacheKey = `geocode:${direccion}`;
     if (MAP_CONFIG.cache.has(cacheKey)) {
-        console.log("✓ Usando caché");
         return MAP_CONFIG.cache.get(cacheKey);
     }
     
     try {
-        // Primero intentar con formato completo
-        const url1 = `${MAP_CONFIG.nominatimServer}/search?` +
-                   `q=${encodeURIComponent(direccion + ', Córdoba, Argentina')}` +
-                   `&format=json&limit=1&addressdetails=1`;
+        const partes = direccion.split(',');
+        const calleSucia = partes[0] || ''; 
+        const ciudad = extractCityFromAddress(direccion) || '';
         
-        console.log("🔗 URL 1:", url1);
+        const calleLimpia = cleanAddressForSearch(calleSucia);
         
-        const response1 = await fetch(url1, {
-            headers: {
-                'User-Agent': 'ComidasAMICI-Delivery/1.0',
-                'Accept': 'application/json'
-            }
-        });
+        const consultas = [];
         
-        if (response1.ok) {
-            const data1 = await response1.json();
-            if (data1 && data1.length > 0) {
-                const resultado = parseGeocodingResult(data1[0]);
-                MAP_CONFIG.cache.set(cacheKey, resultado);
-                console.log("✅ Encontrado con Estrategia 1");
-                return resultado;
-            }
+        if (calleLimpia && ciudad) {
+            consultas.push({
+                q: `${calleLimpia}, ${ciudad}, Córdoba, Argentina`,
+                tipo: 'exacta'
+            });
         }
         
-        // Si falla, buscar solo la ciudad
-        console.log("🔄 Intentando extraer ciudad...");
-        const ciudad = extractCityFromAddress(direccion);
-        
+        if (calleLimpia && ciudad && /\d+/.test(calleLimpia)) {
+            const calleSinNumero = calleLimpia.replace(/\d+/g, '').trim();
+            consultas.push({
+                q: `${calleSinNumero}, ${ciudad}, Córdoba, Argentina`,
+                tipo: 'calle_aproximada'
+            });
+        }
+
         if (ciudad) {
-            console.log("🔍 Buscando ciudad:", ciudad);
-            const url2 = `${MAP_CONFIG.nominatimServer}/search?` +
-                       `q=${encodeURIComponent(ciudad + ', Córdoba, Argentina')}` +
+            consultas.push({
+                q: `${ciudad}, Córdoba, Argentina`,
+                tipo: 'ciudad'
+            });
+        }
+        
+        for (const consulta of consultas) {
+            const url = `${MAP_CONFIG.nominatimServer}/search?` +
+                       `q=${encodeURIComponent(consulta.q)}` +
                        `&format=json&limit=1&addressdetails=1`;
             
-            const response2 = await fetch(url2, {
-                headers: {
-                    'User-Agent': 'ComidasAMICI-Delivery/1.0',
-                    'Accept': 'application/json'
-                }
+            const response = await fetch(url, {
+                headers: { 'User-Agent': 'ComidasAMICI-Delivery/1.0' }
             });
             
-            if (response2.ok) {
-                const data2 = await response2.json();
-                if (data2 && data2.length > 0) {
-                    const resultado = parseGeocodingResult(data2[0]);
-                    resultado.direccionCorta = ciudad;
-                    resultado.esAproximado = true;
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const resultado = parseGeocodingResult(data[0]);
+                    
+                    if (consulta.tipo !== 'exacta') {
+                        resultado.esAproximado = true;
+                        resultado.mensajeNota = consulta.tipo === 'ciudad' 
+                            ? "Dirección no encontrada. Calculando al centro de la ciudad." 
+                            : "Altura no encontrada. Calculando a la calle.";
+                    }
+                    
                     MAP_CONFIG.cache.set(cacheKey, resultado);
-                    console.log("✅ Ciudad encontrada (aproximada)");
                     return resultado;
                 }
             }
         }
         
-        // Último recurso: usar ubicación por defecto basada en la ciudad
-        console.log("🔄 Usando ubicación por defecto...");
         const ciudadDefault = extractCityFromAddress(direccion) || 'Santa María';
         const defaultCoords = getDefaultCoordinatesForCity(ciudadDefault);
         
@@ -140,24 +141,22 @@ async function geocodeAddress(direccion) {
                 ciudad: ciudadDefault,
                 tipoLugar: 'city',
                 esAproximado: true,
-                esPorDefecto: true
+                esPorDefecto: true,
+                mensajeNota: "Ubicación no encontrada en mapa. Usando referencia de ciudad."
             };
             
             MAP_CONFIG.cache.set(cacheKey, resultado);
-            console.log("✅ Usando coordenadas por defecto para:", ciudadDefault);
             return resultado;
         }
         
-        console.warn("❌ No se pudo geocodificar la dirección");
         return null;
         
     } catch (error) {
-        console.error("❌ Error en geocodificación:", error);
+        console.error(error);
         return null;
     }
 }
 
-// 2.1 Función auxiliar para parsear resultados
 function parseGeocodingResult(data) {
     return {
         lat: parseFloat(data.lat),
@@ -171,34 +170,55 @@ function parseGeocodingResult(data) {
     };
 }
 
-// 2.2 Coordenadas por defecto para ciudades conocidas
 function getDefaultCoordinatesForCity(ciudad) {
     const ciudades = {
-        'santa maría': { lat: -31.3000, lng: -64.4667 },
-        'cosquín': { lat: -31.2417, lng: -64.4706 },
-        'la falda': { lat: -31.0833, lng: -64.4833 },
-        'capilla del monte': { lat: -30.8500, lng: -64.5333 },
+        'villa carlos paz': { lat: -31.4208, lng: -64.4992 },
+        'san antonio de arredondo': { lat: -31.4806, lng: -64.5222 },
+        'mayu sumaj': { lat: -31.4950, lng: -64.5317 },
+        'icho cruz': { lat: -31.4889, lng: -64.5494 },
+        'cuesta blanca': { lat: -31.4933, lng: -64.5686 },
+        'tanti': { lat: -31.3533, lng: -64.5906 },
+        'cabalango': { lat: -31.3917, lng: -64.5611 },
+        'estancia vieja': { lat: -31.3789, lng: -64.5233 },
+        'villa santa cruz del lago': { lat: -31.3856, lng: -64.5097 },
+        'siquiman': { lat: -31.3667, lng: -64.4833 },
+        'villa parque siquiman': { lat: -31.3667, lng: -64.4833 },
         'bialet masse': { lat: -31.3427, lng: -64.4748 },
+        'santa maría': { lat: -31.3000, lng: -64.4667 },
+        'santa maría de punilla': { lat: -31.3000, lng: -64.4667 },
+        'cosquín': { lat: -31.2417, lng: -64.4706 },
+        'molinari': { lat: -31.2050, lng: -64.4750 },
+        'casa grande': { lat: -31.1833, lng: -64.4783 },
+        'valle hermoso': { lat: -31.1167, lng: -64.4833 },
+        'la falda': { lat: -31.0833, lng: -64.4833 },
+        'huerta grande': { lat: -31.0500, lng: -64.4917 },
+        'villa giardino': { lat: -31.0333, lng: -64.4950 },
+        'la cumbre': { lat: -30.9833, lng: -64.4917 },
+        'los cocos': { lat: -30.9250, lng: -64.5000 },
+        'san esteban': { lat: -30.9167, lng: -64.5333 },
+        'capilla del monte': { lat: -30.8500, lng: -64.5333 },
+        'charbonier': { lat: -30.7667, lng: -64.5500 },
         'cruz del eje': { lat: -30.7167, lng: -64.8000 },
         'deán funes': { lat: -30.4333, lng: -64.3500 },
-        'valle de punilla': { lat: -31.2500, lng: -64.5000 },
         'córdoba': { lat: -31.4201, lng: -64.1888 }
     };
     
     const ciudadLower = ciudad.toLowerCase();
-    return ciudades[ciudadLower] || null;
+    
+    for (const key in ciudades) {
+        if (ciudadLower.includes(key) || key.includes(ciudadLower)) {
+            return ciudades[key];
+        }
+    }
+    
+    return null;
 }
 
-// 3. Calcular ruta real con OSRM - VERSIÓN TOLERANTE
 async function calculateRoute(origen, destino) {
-    console.log("🛣️ Calculando ruta...");
-    
     const cacheKey = `route:${origen.lat},${origen.lng}-${destino.lat},${destino.lng}`;
     if (MAP_CONFIG.cache.has(cacheKey)) return MAP_CONFIG.cache.get(cacheKey);
     
-    // Si es una ubicación aproximada, usar cálculo estimado
-    if (destino.esAproximado || destino.esPorDefecto) {
-        console.log("📏 Usando cálculo estimado para ubicación aproximada");
+    if (destino.esPorDefecto) {
         return calculateEstimatedDistance(origen, destino);
     }
     
@@ -223,19 +243,16 @@ async function calculateRoute(origen, destino) {
             };
             
             MAP_CONFIG.cache.set(cacheKey, resultado);
-            console.log("✅ Ruta calculada:", resultado.distanciaKm, "km en", resultado.duracionMinutos, "min");
             return resultado;
         }
         
         return calculateEstimatedDistance(origen, destino);
         
     } catch (error) {
-        console.error("❌ Error calculando ruta:", error);
         return calculateEstimatedDistance(origen, destino);
     }
 }
 
-// 4. Cálculo estimado
 function calculateEstimatedDistance(origen, destino) {
     const R = 6371000;
     const φ1 = origen.lat * Math.PI / 180;
@@ -249,9 +266,9 @@ function calculateEstimatedDistance(origen, destino) {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     const distanciaLineaRecta = R * c;
     
-    const factorCorreccion = 1.5;
+    const factorCorreccion = 1.4;
     const distanciaEstimada = distanciaLineaRecta * factorCorreccion;
-    const velocidadPromedio = 8.33; // m/s = 30 km/h
+    const velocidadPromedio = 11.11; 
     const tiempoEstimado = distanciaEstimada / velocidadPromedio;
     
     const resultado = {
@@ -263,56 +280,33 @@ function calculateEstimatedDistance(origen, destino) {
         esEstimado: true
     };
     
-    console.log("✅ Distancia estimada:", resultado.distanciaKm, "km en", resultado.duracionMinutos, "min");
     return resultado;
 }
 
-// 5. FUNCIÓN PARA GENERAR URL DE UBICACIÓN DE GOOGLE MAPS
 function generarUrlUbicacion() {
-    console.log("📍 Generando URL de Google Maps...");
-    
-    // Obtener datos del formulario
     const calle = document.getElementById('customer-street')?.value.trim() || '';
     const numero = document.getElementById('customer-number')?.value.trim() || '';
     const barrio = document.getElementById('customer-neighborhood')?.value.trim() || '';
     const ciudad = document.getElementById('customer-city')?.value.trim() || '';
     
-    // Verificar datos mínimos
     if (!calle || !numero || !ciudad) {
-        console.warn("⚠️ Faltan datos para generar ubicación");
         return null;
     }
     
-    // Construir dirección para Google Maps
     let direccionParaMapa = `${calle}+${numero}`;
     if (barrio) direccionParaMapa += `,+${barrio}`;
     direccionParaMapa += `,+${ciudad},+Córdoba,+Argentina`;
     
-    // Limpiar caracteres especiales
     direccionParaMapa = direccionParaMapa
         .replace(/\s+/g, '+')
-        .replace(/ñ/g, 'n')
-        .replace(/Ñ/g, 'N')
-        .replace(/á/g, 'a')
-        .replace(/é/g, 'e')
-        .replace(/í/g, 'i')
-        .replace(/ó/g, 'o')
-        .replace(/ú/g, 'u')
-        .replace(/Á/g, 'A')
-        .replace(/É/g, 'E')
-        .replace(/Í/g, 'I')
-        .replace(/Ó/g, 'O')
-        .replace(/Ú/g, 'U');
+        .replace(/ñ/g, 'n').replace(/Ñ/g, 'N')
+        .replace(/[áéíóúÁÉÍÓÚ]/g, m => 'aeiouAEIOU'['áéíóúÁÉÍÓÚ'.indexOf(m)]);
     
-    // Generar URL de Google Maps
     const urlGoogleMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccionParaMapa)}`;
     
-    // Generar texto legible
     const direccionTexto = `${calle} ${numero}${barrio ? ', ' + barrio : ''}, ${ciudad}, Córdoba, Argentina`
         .replace(/, ,/g, ',')
         .replace(/^\s*,\s*|\s*,\s*$/g, '');
-    
-    console.log("✅ URL de Google Maps generada:", urlGoogleMaps);
     
     return {
         googleMaps: urlGoogleMaps,
@@ -321,7 +315,6 @@ function generarUrlUbicacion() {
     };
 }
 
-// Exportar funciones
 window.MAP_CONFIG = MAP_CONFIG;
 window.setupStaticMap = setupStaticMap;
 window.geocodeAddress = geocodeAddress;
@@ -330,3 +323,4 @@ window.getDefaultCoordinatesForCity = getDefaultCoordinatesForCity;
 window.calculateRoute = calculateRoute;
 window.calculateEstimatedDistance = calculateEstimatedDistance;
 window.generarUrlUbicacion = generarUrlUbicacion;
+window.cleanAddressForSearch = cleanAddressForSearch;

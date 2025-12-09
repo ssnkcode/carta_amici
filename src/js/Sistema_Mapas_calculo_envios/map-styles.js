@@ -1,48 +1,15 @@
-// map-styles.js - Estilos CSS
 console.log("🎨 map-styles.js cargado");
 
-// 1. Integración con sistema existente
-function integrateWithExistingSystem() {
-    console.log("🔗 Integrando con sistema existente...");
-    
-    if (typeof window.calculateSubtotal === 'function') {
-        const originalCalculateSubtotal = window.calculateSubtotal;
-        
-        window.calculateSubtotal = function() {
-            const subtotal = originalCalculateSubtotal();
-            const deliveryElement = document.getElementById('delivery-cost');
-            let deliveryCost = 500; // Default mínimo
-            
-            if (deliveryElement && !deliveryElement.textContent.includes('$')) {
-                deliveryCost = parseInt(deliveryElement.textContent.replace('$', '')) || 500;
-            }
-            
-            return subtotal + deliveryCost;
-        };
-        
-        console.log("✅ calculateSubtotal integrado");
-    }
-    
-    addDeliveryStyles();
-}
-
-// 2. Añadir estilos CSS
 function addDeliveryStyles() {
-    console.log("✅ Usando map.css para estilos");
-    
     const mapCss = Array.from(document.styleSheets).find(sheet => 
         sheet.href && sheet.href.includes('map.css')
     );
     
-    if (mapCss) {
-        console.log("✅ map.css detectado");
-    } else {
-        console.warn("⚠️ map.css no detectado");
+    if (!mapCss) {
         createFallbackStyles();
     }
 }
 
-// 3. Estilos de respaldo - ACTUALIZADOS
 function createFallbackStyles() {
     const styleId = 'map-fallback-styles';
     if (!document.getElementById(styleId)) {
@@ -77,7 +44,11 @@ function createFallbackStyles() {
     }
 }
 
-// Exportar funciones
-window.integrateWithExistingSystem = integrateWithExistingSystem;
 window.addDeliveryStyles = addDeliveryStyles;
 window.createFallbackStyles = createFallbackStyles;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addDeliveryStyles);
+} else {
+    addDeliveryStyles();
+}

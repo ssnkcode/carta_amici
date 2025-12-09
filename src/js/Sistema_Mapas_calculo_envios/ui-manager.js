@@ -1,7 +1,5 @@
-// ui-manager.js - Gestión de interfaz y notificaciones
 console.log("🎨 ui-manager.js cargado");
 
-// 1. Información de zona de cobertura AMPLIADA
 function addCoverageInfo() {
     const mapHeader = document.querySelector('.map-header');
     if (mapHeader) {
@@ -21,31 +19,26 @@ function addCoverageInfo() {
     }
 }
 
-// 2. Actualizar interfaz - MEJORADA
 function updateDeliveryInfo(resultado) {
-    console.log("🔄 Actualizando interfaz...");
-    
     const deliveryCostElement = document.getElementById('delivery-cost');
-    const totalCostElement = document.getElementById('total-cost');
     
-    if (deliveryCostElement && totalCostElement) {
+    if (deliveryCostElement) {
+        deliveryCostElement.dataset.calculating = "false"; 
+
         if (resultado.dentroCobertura) {
             deliveryCostElement.textContent = `$${resultado.costo}`;
+            deliveryCostElement.dataset.cost = resultado.costo;
             deliveryCostElement.className = 'delivery-cost-ok';
-            
-            const subtotal = parseFloat(document.getElementById('subtotal').textContent.replace('$', '')) || 0;
-            totalCostElement.textContent = `$${subtotal + resultado.costo}`;
             
             showDeliveryDetails(resultado);
             
-            // Mostrar nota si es aproximado
             if (resultado.esAproximado || resultado.mensajeNota) {
                 showNotification(resultado.mensajeNota || "Cálculo basado en ubicación aproximada", 'info');
             }
         } else {
-            deliveryCostElement.textContent = "Consultar";
+            deliveryCostElement.textContent = "A calcular";
+            deliveryCostElement.dataset.cost = "0";
             deliveryCostElement.className = 'delivery-cost-error';
-            totalCostElement.textContent = "Consultar";
             
             if (resultado.mensaje) {
                 showNotification(resultado.mensaje, 'warning');
@@ -55,26 +48,31 @@ function updateDeliveryInfo(resultado) {
         }
     }
     
+    if (typeof window.updateOrderSummary === 'function') {
+        window.updateOrderSummary();
+    }
+    
     updateFormDeliveryInfo(resultado);
 }
 
-// 2.1 Función de notificación mejorada
 function showNotification(mensaje, tipo = 'info') {
     const notification = document.getElementById('notification');
     if (notification) {
         notification.textContent = mensaje;
-        notification.className = `notification ${tipo}`;
+        notification.className = `notification ${tipo} show`;
         notification.style.display = 'block';
         
         setTimeout(() => {
-            notification.style.display = 'none';
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 500);
         }, 5000);
     } else {
         console.warn(mensaje);
     }
 }
 
-// 3. Mostrar detalles del envío - ACTUALIZADO CON NUEVA LÓGICA
 function showDeliveryDetails(resultado) {
     let detailsElement = document.getElementById('delivery-details');
     if (!detailsElement) {
@@ -84,13 +82,14 @@ function showDeliveryDetails(resultado) {
         
         const orderSummary = document.querySelector('.order-summary');
         if (orderSummary) orderSummary.parentNode.insertBefore(detailsElement, orderSummary);
+    } else {
+        detailsElement.style.display = 'block';
     }
     
     const icon = resultado.esRutaExacta ? '✓' : resultado.esAproximado ? '≈' : '~';
     let zoneClass = 'zone-out';
     const minutos = resultado.duracionCalculada || resultado.tiempo;
     
-    // Determinar clase de zona basada en minutos
     if (minutos <= 30) zoneClass = 'zone-1';
     else if (minutos <= 60) zoneClass = 'zone-2';
     else if (minutos <= 90) zoneClass = 'zone-3';
@@ -115,7 +114,7 @@ function showDeliveryDetails(resultado) {
             </div>
             <div class="delivery-row">
                 <i class="fas fa-clock"></i>
-                <span>Tiempo estimado: <strong>${minutos} minutos</strong></span>
+                <span>Tiempo estimado: <strong>${resultado.tiempoEstimado || minutos + ' min'}</strong></span>
             </div>
             <div class="delivery-row">
                 <i class="fas fa-truck"></i>
@@ -130,11 +129,9 @@ function showDeliveryDetails(resultado) {
     `;
 }
 
-// 4. Actualizar formulario
 function updateFormDeliveryInfo(resultado) {
     const submitBtn = document.querySelector('.submit-btn');
     if (submitBtn) {
-        // Remover info anterior
         const existingInfo = document.querySelector('.delivery-time-info');
         if (existingInfo) existingInfo.remove();
         
@@ -150,7 +147,7 @@ function updateFormDeliveryInfo(resultado) {
             infoDiv.innerHTML = `
                 <p>
                     <i class="fas fa-shipping-fast"></i> 
-                    Tiempo estimado: <strong>${resultado.tiempo} minutos</strong> | 
+                    Tiempo estimado: <strong>${resultado.tiempoEstimado}</strong> | 
                     Costo envío: <strong>$${resultado.costo}</strong>
                 </p>
                 ${notaExtra}
@@ -160,24 +157,40 @@ function updateFormDeliveryInfo(resultado) {
     }
 }
 
-// 5. Indicador de carga
 function showLoadingIndicator(show) {
     let indicator = document.getElementById('map-loading-indicator');
     
-    if (!indicator && show) {
+    if (!indicator) {
         indicator = document.createElement('div');
         indicator.id = 'map-loading-indicator';
         indicator.className = 'loading-indicator';
-        indicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calculando envío...';
+        indicator.innerHTML = '<i class="fas fa-spinner"></i> Calculando costo de envío...';
         
         const mapFrame = document.getElementById('map-frame');
-        if (mapFrame) mapFrame.parentNode.insertBefore(indicator, mapFrame.nextSibling);
+        if (mapFrame) {
+            mapFrame.parentNode.insertBefore(indicator, mapFrame.nextSibling);
+        } else {
+            const summary = document.querySelector('.order-summary');
+            if(summary) summary.parentNode.insertBefore(indicator, summary);
+        }
     }
     
-    if (indicator) indicator.style.display = show ? 'block' : 'none';
+    indicator.style.display = show ? 'block' : 'none';
+    
+    const deliveryCostElement = document.getElementById('delivery-cost');
+    if (deliveryCostElement) {
+        if (show) {
+            deliveryCostElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            deliveryCostElement.dataset.calculating = "true";
+            deliveryCostElement.dataset.cost = "0";
+        }
+    }
+    
+    if (show && typeof window.updateOrderSummary === 'function') {
+        window.updateOrderSummary();
+    }
 }
 
-// Exportar funciones
 window.addCoverageInfo = addCoverageInfo;
 window.updateDeliveryInfo = updateDeliveryInfo;
 window.showNotification = showNotification;

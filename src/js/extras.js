@@ -1,16 +1,22 @@
-
-
 function generateExtrasHTML(item) {
     let html = '';
     
     const showSauces = ['hamburguesa', 'sandwich', 'papas'].includes(item.category);
     const showGeneralExtras = item.category === 'pizza';
+    
+    const isEmpanada = item.category === 'empanadas';
+    const isEmpanadaUnidad = isEmpanada && item.name.toLowerCase().includes('unidad');
+    const isEmpanadaMediaDocena = isEmpanada && item.name.toLowerCase().includes('1/2');
+
     const showNotes = true;
     
     let buttonText = '';
     let buttonIcon = '';
     
-    if (showSauces && showGeneralExtras) {
+    if (isEmpanadaUnidad || isEmpanadaMediaDocena) {
+        buttonText = 'Elegir Gustos (Obligatorio)';
+        buttonIcon = 'fa-utensils';
+    } else if (showSauces && showGeneralExtras) {
         buttonText = 'Agregar Adicionales';
         buttonIcon = 'fa-plus-circle';
     } else if (showSauces) {
@@ -21,9 +27,11 @@ function generateExtrasHTML(item) {
         buttonIcon = 'fa-sticky-note';
     }
     
-    if (showSauces || showGeneralExtras || showNotes) {
+    if (showSauces || showGeneralExtras || showNotes || isEmpanada) {
+        const extraClass = (isEmpanadaUnidad || isEmpanadaMediaDocena) ? 'required-section' : '';
+        
         html += `
-            <button type="button" class="extras-toggle-btn" data-product-id="${item.id}">
+            <button type="button" class="extras-toggle-btn ${extraClass}" data-product-id="${item.id}">
                 <span>
                     <i class="fas ${buttonIcon}"></i>
                     ${buttonText}
@@ -33,43 +41,60 @@ function generateExtrasHTML(item) {
             <div class="extras-container" id="extras-container-${item.id}">
         `;
         
+        if (isEmpanadaUnidad && item.flavors && item.flavors.length > 0) {
+            html += `
+                <div class="flavors-section">
+                    <h4 class="flavors-title">Seleccioná el gusto (1):</h4>
+                    <div class="flavors-grid-radio">
+                        ${item.flavors.map((sabor, index) => `
+                            <label class="flavor-radio-option">
+                                <input type="radio" name="flavor-unit-${item.id}" value="${sabor}" class="flavor-unit-radio">
+                                <span class="flavor-name">${sabor}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (isEmpanadaMediaDocena && item.flavors && item.flavors.length > 0) {
+            html += `
+                <div class="flavors-section">
+                    <h4 class="flavors-title">Seleccioná los 6 gustos:</h4>
+                    <div class="flavors-counter-info">Llevas seleccionadas: <span id="counter-total-${item.id}">0</span>/6</div>
+                    <div class="general-extras-grid">
+                        ${item.flavors.map((sabor, index) => `
+                            <div class="general-extra-option flavor-counter-row">
+                                <span class="flavor-name-counter">${sabor}</span>
+                                <div class="extra-quantity-selector">
+                                    <button type="button" class="extra-qty-btn minus" onclick="updateFlavorQty('${item.id}', '${index}', -1)">-</button>
+                                    <input type="number" id="flavor-qty-${item.id}-${index}" 
+                                           class="extra-qty-input flavor-qty-input-${item.id}" 
+                                           data-name="${sabor}"
+                                           value="0" min="0" max="6" readonly>
+                                    <button type="button" class="extra-qty-btn plus" onclick="updateFlavorQty('${item.id}', '${index}', 1)">+</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
         if (showSauces) {
             html += `
                 <div class="sauces-section">
-                    <h4 class="sauces-title">
-                        <i class="fas fa-wine-bottle"></i>
-                        Salsas adicionales:
-                    </h4>
+                    <h4 class="sauces-title"><i class="fas fa-wine-bottle"></i> Salsas adicionales:</h4>
                     <div class="sauce-options">
+                        ${['Mayonesa', 'Ketchup', 'Mostaza'].map(sauce => `
+                            <label class="sauce-option">
+                                <input type="checkbox" class="sauce-checkbox" data-product-id="${item.id}" data-name="${sauce}" data-price="50">
+                                <span class="sauce-name">${sauce}</span>
+                                <span class="sauce-price">+$50</span>
+                            </label>
+                        `).join('')}
                         <label class="sauce-option">
-                            <input type="checkbox" class="sauce-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-name="Mayonesa" 
-                                   data-price="50">
-                            <span class="sauce-name">Mayonesa</span>
-                            <span class="sauce-price">+$50</span>
-                        </label>
-                        <label class="sauce-option">
-                            <input type="checkbox" class="sauce-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-name="Ketchup" 
-                                   data-price="50">
-                            <span class="sauce-name">Ketchup</span>
-                            <span class="sauce-price">+$50</span>
-                        </label>
-                        <label class="sauce-option">
-                            <input type="checkbox" class="sauce-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-name="Mostaza" 
-                                   data-price="50">
-                            <span class="sauce-name">Mostaza</span>
-                            <span class="sauce-price">+$50</span>
-                        </label>
-                        <label class="sauce-option">
-                            <input type="checkbox" class="sauce-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-name="Salsa BBQ" 
-                                   data-price="80">
+                            <input type="checkbox" class="sauce-checkbox" data-product-id="${item.id}" data-name="Salsa BBQ" data-price="80">
                             <span class="sauce-name">Salsa BBQ</span>
                             <span class="sauce-price">+$80</span>
                         </label>
@@ -79,132 +104,38 @@ function generateExtrasHTML(item) {
         }
         
         if (showGeneralExtras) {
-            html += `
+             html += `
                 <div class="general-extras-section">
-                    <h4 class="general-extras-title">
-                        <i class="fas fa-plus-circle"></i>
-                        Adicionales:
-                    </h4>
+                    <h4 class="general-extras-title"><i class="fas fa-plus-circle"></i> Adicionales:</h4>
                     <div class="general-extras-grid">
-                        <label class="general-extra-option">
-                            <div class="general-extra-info">
-                                <div class="general-extra-label">
-                                    <span class="general-extra-name">Doble Mozzarella</span>
-                                    <span class="general-extra-description">Extra de queso</span>
+                        ${[
+                            {id: 'doble-mozzarella', name: 'Doble Mozzarella', price: 100, desc: 'Extra de queso'},
+                            {id: 'jamon-extra', name: 'Jamón extra', price: 120, desc: 'Doble porción'},
+                            {id: 'tomate-extra', name: 'Tomate extra', price: 60, desc: 'Rodajas adicionales'},
+                            {id: 'morron', name: 'Morrón', price: 80, desc: 'Tiras de pimiento'},
+                            {id: 'aceitunas', name: 'Aceitunas', price: 70, desc: 'Verdes o negras'},
+                            {id: 'anchoas', name: 'Anchoas', price: 150, desc: 'Filetes de anchoa'}
+                        ].map(extra => `
+                            <label class="general-extra-option">
+                                <div class="general-extra-info">
+                                    <div class="general-extra-label">
+                                        <span class="general-extra-name">${extra.name}</span>
+                                        <span class="general-extra-description">${extra.desc}</span>
+                                    </div>
+                                    <span class="general-extra-price">+$${extra.price}</span>
                                 </div>
-                                <span class="general-extra-price">+$100</span>
-                            </div>
-                            <input type="checkbox" class="general-extra-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-extra-id="doble-mozzarella-${item.id}"
-                                   data-name="Doble Mozzarella" 
-                                   data-price="100">
-                            <div class="extra-quantity-selector">
-                                <button type="button" class="extra-qty-btn minus" onclick="updateExtraQty('doble-mozzarella-${item.id}', -1)">-</button>
-                                <input type="number" id="extra-qty-doble-mozzarella-${item.id}" class="extra-qty-input" value="1" min="1" max="10" readonly>
-                                <button type="button" class="extra-qty-btn plus" onclick="updateExtraQty('doble-mozzarella-${item.id}', 1)">+</button>
-                            </div>
-                        </label>
-                        
-                        <label class="general-extra-option">
-                            <div class="general-extra-info">
-                                <div class="general-extra-label">
-                                    <span class="general-extra-name">Jamón extra</span>
-                                    <span class="general-extra-description">Doble porción</span>
+                                <input type="checkbox" class="general-extra-checkbox" 
+                                       data-product-id="${item.id}" 
+                                       data-extra-id="${extra.id}-${item.id}"
+                                       data-name="${extra.name}" 
+                                       data-price="${extra.price}">
+                                <div class="extra-quantity-selector">
+                                    <button type="button" class="extra-qty-btn minus" onclick="updateExtraQty('${extra.id}-${item.id}', -1)">-</button>
+                                    <input type="number" id="extra-qty-${extra.id}-${item.id}" class="extra-qty-input" value="1" min="1" max="10" readonly>
+                                    <button type="button" class="extra-qty-btn plus" onclick="updateExtraQty('${extra.id}-${item.id}', 1)">+</button>
                                 </div>
-                                <span class="general-extra-price">+$120</span>
-                            </div>
-                            <input type="checkbox" class="general-extra-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-extra-id="jamon-extra-${item.id}"
-                                   data-name="Jamón extra" 
-                                   data-price="120">
-                            <div class="extra-quantity-selector">
-                                <button type="button" class="extra-qty-btn minus" onclick="updateExtraQty('jamon-extra-${item.id}', -1)">-</button>
-                                <input type="number" id="extra-qty-jamon-extra-${item.id}" class="extra-qty-input" value="1" min="1" max="10" readonly>
-                                <button type="button" class="extra-qty-btn plus" onclick="updateExtraQty('jamon-extra-${item.id}', 1)">+</button>
-                            </div>
-                        </label>
-                        
-                        <label class="general-extra-option">
-                            <div class="general-extra-info">
-                                <div class="general-extra-label">
-                                    <span class="general-extra-name">Tomate extra</span>
-                                    <span class="general-extra-description">Rodajas adicionales</span>
-                                </div>
-                                <span class="general-extra-price">+$60</span>
-                            </div>
-                            <input type="checkbox" class="general-extra-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-extra-id="tomate-extra-${item.id}"
-                                   data-name="Tomate extra" 
-                                   data-price="60">
-                            <div class="extra-quantity-selector">
-                                <button type="button" class="extra-qty-btn minus" onclick="updateExtraQty('tomate-extra-${item.id}', -1)">-</button>
-                                <input type="number" id="extra-qty-tomate-extra-${item.id}" class="extra-qty-input" value="1" min="1" max="10" readonly>
-                                <button type="button" class="extra-qty-btn plus" onclick="updateExtraQty('tomate-extra-${item.id}', 1)">+</button>
-                            </div>
-                        </label>
-                        
-                        <label class="general-extra-option">
-                            <div class="general-extra-info">
-                                <div class="general-extra-label">
-                                    <span class="general-extra-name">Morrón</span>
-                                    <span class="general-extra-description">Tiras de pimiento</span>
-                                </div>
-                                <span class="general-extra-price">+$80</span>
-                            </div>
-                            <input type="checkbox" class="general-extra-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-extra-id="morron-${item.id}"
-                                   data-name="Morrón" 
-                                   data-price="80">
-                            <div class="extra-quantity-selector">
-                                <button type="button" class="extra-qty-btn minus" onclick="updateExtraQty('morron-${item.id}', -1)">-</button>
-                                <input type="number" id="extra-qty-morron-${item.id}" class="extra-qty-input" value="1" min="1" max="10" readonly>
-                                <button type="button" class="extra-qty-btn plus" onclick="updateExtraQty('morron-${item.id}', 1)">+</button>
-                            </div>
-                        </label>
-                        
-                        <label class="general-extra-option">
-                            <div class="general-extra-info">
-                                <div class="general-extra-label">
-                                    <span class="general-extra-name">Aceitunas</span>
-                                    <span class="general-extra-description">Verdes o negras</span>
-                                </div>
-                                <span class="general-extra-price">+$70</span>
-                            </div>
-                            <input type="checkbox" class="general-extra-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-extra-id="aceitunas-${item.id}"
-                                   data-name="Aceitunas" 
-                                   data-price="70">
-                            <div class="extra-quantity-selector">
-                                <button type="button" class="extra-qty-btn minus" onclick="updateExtraQty('aceitunas-${item.id}', -1)">-</button>
-                                <input type="number" id="extra-qty-aceitunas-${item.id}" class="extra-qty-input" value="1" min="1" max="10" readonly>
-                                <button type="button" class="extra-qty-btn plus" onclick="updateExtraQty('aceitunas-${item.id}', 1)">+</button>
-                            </div>
-                        </label>
-                        
-                        <label class="general-extra-option">
-                            <div class="general-extra-info">
-                                <div class="general-extra-label">
-                                    <span class="general-extra-name">Anchoas</span>
-                                    <span class="general-extra-description">Filetes de anchoa</span>
-                                </div>
-                                <span class="general-extra-price">+$150</span>
-                            </div>
-                            <input type="checkbox" class="general-extra-checkbox" 
-                                   data-product-id="${item.id}" 
-                                   data-extra-id="anchoas-${item.id}"
-                                   data-name="Anchoas" 
-                                   data-price="150">
-                            <div class="extra-quantity-selector">
-                                <button type="button" class="extra-qty-btn minus" onclick="updateExtraQty('anchoas-${item.id}', -1)">-</button>
-                                <input type="number" id="extra-qty-anchoas-${item.id}" class="extra-qty-input" value="1" min="1" max="10" readonly>
-                                <button type="button" class="extra-qty-btn plus" onclick="updateExtraQty('anchoas-${item.id}', 1)">+</button>
-                            </div>
-                        </label>
+                            </label>
+                        `).join('')}
                     </div>
                 </div>
             `;
@@ -215,10 +146,10 @@ function generateExtrasHTML(item) {
                 <div class="product-notes-container">
                     <label class="product-notes-label">
                         <i class="fas fa-sticky-note"></i>
-                        Notas específicas:
+                        Notas adicionales:
                     </label>
                     <textarea id="product-notes-${item.id}" class="product-notes-input" 
-                              placeholder="Ej: Sin orégano, bien cocida, sin cebolla..." 
+                              placeholder="Ej: Sin sal, bien cocida..." 
                               rows="2"></textarea>
                 </div>
             `;
@@ -237,19 +168,14 @@ function setupExtrasEventListeners(productId) {
     if (toggleBtn && extrasContainer) {
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            
             const isCurrentlyExpanded = this.classList.contains('expanded');
-            
-            document.querySelectorAll('.extras-toggle-btn').forEach(btn => {
-                btn.classList.remove('expanded');
-            });
-            document.querySelectorAll('.extras-container').forEach(container => {
-                container.classList.remove('expanded');
-            });
             
             if (!isCurrentlyExpanded) {
                 this.classList.add('expanded');
                 extrasContainer.classList.add('expanded');
+            } else {
+                this.classList.remove('expanded');
+                extrasContainer.classList.remove('expanded');
             }
         });
     }
@@ -257,120 +183,108 @@ function setupExtrasEventListeners(productId) {
     document.querySelectorAll(`.sauce-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const parent = this.parentElement;
-            if (this.checked) {
-                parent.classList.add('selected');
-            } else {
-                parent.classList.remove('selected');
-            }
+            if (this.checked) parent.classList.add('selected');
+            else parent.classList.remove('selected');
         });
     });
     
     document.querySelectorAll(`.general-extra-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const parent = this.parentElement;
-            if (this.checked) {
-                parent.classList.add('selected');
-            } else {
-                parent.classList.remove('selected');
-            }
+            if (this.checked) parent.classList.add('selected');
+            else parent.classList.remove('selected');
         });
     });
+    
+    document.querySelectorAll(`input[name="flavor-unit-${productId}"]`).forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll(`input[name="flavor-unit-${productId}"]`).forEach(r => {
+                r.parentElement.classList.remove('selected');
+            });
+            if (this.checked) this.parentElement.classList.add('selected');
+        });
+    });
+}
+
+function updateFlavorQty(productId, flavorIndex, change) {
+    const input = document.getElementById(`flavor-qty-${productId}-${flavorIndex}`);
+    const totalDisplay = document.getElementById(`counter-total-${productId}`);
+    
+    if (!input || !totalDisplay) return;
+    
+    let currentTotal = 0;
+    const allInputs = document.querySelectorAll(`.flavor-qty-input-${productId}`);
+    allInputs.forEach(inp => currentTotal += parseInt(inp.value || 0));
+    
+    let currentValue = parseInt(input.value) || 0;
+    let newValue = currentValue + change;
+    
+    if (newValue < 0) return;
+    
+    if (change > 0 && currentTotal >= 6) {
+        showNotification("¡Ya seleccionaste las 6 empanadas!", "warning");
+        return;
+    }
+    
+    input.value = newValue;
+    
+    currentTotal = 0;
+    allInputs.forEach(inp => currentTotal += parseInt(inp.value || 0));
+    totalDisplay.textContent = currentTotal;
+    
+    if (newValue > 0) input.parentElement.parentElement.classList.add('selected');
+    else input.parentElement.parentElement.classList.remove('selected');
 }
 
 function updateExtraQty(extraId, change) {
     const input = document.getElementById(`extra-qty-${extraId}`);
     if (!input) return;
-    
     let currentValue = parseInt(input.value) || 1;
     let newValue = currentValue + change;
-    
     if (newValue < 1) newValue = 1;
     if (newValue > 10) newValue = 10;
-    
     input.value = newValue;
 }
 
-function addToCart(id) {
-    const foodItem = foodItems.find(item => item.id === id);
-    if (!foodItem) return;
-    
-    const quantityInput = document.getElementById(`qty-${id}`);
-    const quantityToAdd = parseInt(quantityInput.value) || 1;
-    
-    const sauceCheckboxes = document.querySelectorAll(`.sauce-checkbox[data-product-id="${id}"]:checked`);
-    const selectedSauces = Array.from(sauceCheckboxes).map(checkbox => ({
-        name: checkbox.dataset.name,
-        price: parseInt(checkbox.dataset.price)
-    }));
-    
-    const generalExtras = document.querySelectorAll(`.general-extra-checkbox[data-product-id="${id}"]:checked`);
-    const selectedGeneralExtras = Array.from(generalExtras).map(checkbox => {
-        const quantityInput = document.getElementById(`extra-qty-${checkbox.dataset.extraId}`);
-        const quantity = quantityInput ? parseInt(quantityInput.value) || 1 : 1;
-        
-        return {
-            id: checkbox.dataset.extraId,
-            name: checkbox.dataset.name,
-            price: parseInt(checkbox.dataset.price),
-            quantity: quantity
-        };
-    });
-    
-    const notesInput = document.getElementById(`product-notes-${id}`);
-    const productNotes = notesInput ? notesInput.value.trim() : '';
-    
-    const existingItemIndex = selectedItems.findIndex(item => 
-        item.id === id && 
-        JSON.stringify(item.sauces) === JSON.stringify(selectedSauces) &&
-        JSON.stringify(item.generalExtras) === JSON.stringify(selectedGeneralExtras) &&
-        item.notes === productNotes
-    );
-    
-    if (existingItemIndex >= 0) {
-        selectedItems[existingItemIndex].quantity += quantityToAdd;
-        showNotification(`Se agregaron ${quantityToAdd} más de ${foodItem.name}`, 'success');
-    } else {
-        const newItem = {
-            ...foodItem,
-            quantity: quantityToAdd,
-            sauces: selectedSauces,
-            generalExtras: selectedGeneralExtras,
-            notes: productNotes
-        };
-        
-        selectedItems.push(newItem);
-        showNotification(`${foodItem.name} agregado al carrito`, 'success');
+window.getEmpanadaSelection = function(productId, isUnit, isHalfDozen) {
+    if (isUnit) {
+        const selected = document.querySelector(`input[name="flavor-unit-${productId}"]:checked`);
+        return selected ? [selected.value] : [];
     }
     
-    resetProductControls(id);
-    quantityInput.value = 1;
+    if (isHalfDozen) {
+        const flavors = [];
+        const inputs = document.querySelectorAll(`.flavor-qty-input-${productId}`);
+        inputs.forEach(input => {
+            const qty = parseInt(input.value || 0);
+            const name = input.dataset.name;
+            if (qty > 0) {
+                flavors.push(`${qty}x ${name}`);
+            }
+        });
+        
+        let totalCount = 0;
+        inputs.forEach(input => totalCount += parseInt(input.value || 0));
+        
+        return {
+            flavorsList: flavors,
+            totalCount: totalCount
+        };
+    }
     
-    renderFoodItems();
-    renderSelectedItems();
-    updateOrderSummary();
-    saveToLocalStorage();
-}
+    return null;
+};
 
-function resetProductControls(productId) {
-    document.querySelectorAll(`.sauce-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
-        checkbox.checked = false;
-        checkbox.parentElement.classList.remove('selected');
+window.resetEmpanadaSelection = function(productId) {
+    document.querySelectorAll(`input[name="flavor-unit-${productId}"]`).forEach(r => {
+        r.checked = false;
+        r.parentElement.classList.remove('selected');
     });
     
-    document.querySelectorAll(`.general-extra-checkbox[data-product-id="${productId}"]`).forEach(checkbox => {
-        checkbox.checked = false;
-        checkbox.parentElement.classList.remove('selected');
-        const extraId = checkbox.dataset.extraId;
-        const qtyInput = document.getElementById(`extra-qty-${extraId}`);
-        if (qtyInput) qtyInput.value = 1;
+    document.querySelectorAll(`.flavor-qty-input-${productId}`).forEach(i => {
+        i.value = 0;
+        i.parentElement.parentElement.classList.remove('selected');
     });
-    
-    const notesInput = document.getElementById(`product-notes-${productId}`);
-    if (notesInput) notesInput.value = '';
-    
-    const toggleBtn = document.querySelector(`.extras-toggle-btn[data-product-id="${productId}"]`);
-    const extrasContainer = document.getElementById(`extras-container-${productId}`);
-    
-    if (toggleBtn) toggleBtn.classList.remove('expanded');
-    if (extrasContainer) extrasContainer.classList.remove('expanded');
-}
+    const totalDisplay = document.getElementById(`counter-total-${productId}`);
+    if (totalDisplay) totalDisplay.textContent = '0';
+};
