@@ -1,4 +1,4 @@
-// form.js - VERSIÓN ACTUALIZADA CON MAPA SEPARADO
+// form.js - VERSIÓN ACTUALIZADA CON MAPA SEPARADO Y UBICACIÓN GOOGLE MAPS
 
 const FORM_CONFIG = {
     phonePattern: /^[0-9]{10,15}$/,
@@ -12,7 +12,7 @@ const FORM_CONFIG = {
     }
 };
 
-console.log("✅ form.js cargado - Versión con mapa separado");
+console.log("✅ form.js cargado - Versión con mapa separado y Google Maps");
 
 // ============================================
 // CONEXIÓN CON EL CARRITO REAL
@@ -54,6 +54,48 @@ function getCarritoActual() {
     } catch(e) {}
     
     return [];
+}
+
+// ============================================
+// FUNCIÓN PARA GENERAR UBICACIÓN GOOGLE MAPS
+// ============================================
+
+function generarUbicacionGoogleMaps() {
+    try {
+        // Obtener datos del formulario
+        const calle = document.getElementById('customer-street')?.value.trim() || '';
+        const numero = document.getElementById('customer-number')?.value.trim() || '';
+        const barrio = document.getElementById('customer-neighborhood')?.value.trim() || '';
+        const ciudad = document.getElementById('customer-city')?.value.trim() || '';
+        
+        if (!calle || !numero || !ciudad) {
+            console.warn("⚠️ Faltan datos para generar ubicación");
+            return null;
+        }
+        
+        // Construir dirección completa
+        let direccionCompleta = `${calle} ${numero}`;
+        if (barrio) direccionCompleta += `, ${barrio}`;
+        direccionCompleta += `, ${ciudad}, Córdoba, Argentina`;
+        
+        // Codificar para URL
+        const direccionCodificada = encodeURIComponent(direccionCompleta);
+        
+        // Generar URL de Google Maps
+        const urlGoogleMaps = `https://www.google.com/maps/search/?api=1&query=${direccionCodificada}`;
+        
+        console.log("📍 Ubicación de Google Maps generada:", urlGoogleMaps);
+        
+        return {
+            texto: `📍 *UBICACIÓN EN GOOGLE MAPS:*\n${urlGoogleMaps}`,
+            url: urlGoogleMaps,
+            direccion: direccionCompleta
+        };
+        
+    } catch (error) {
+        console.error("❌ Error generando ubicación:", error);
+        return null;
+    }
 }
 
 // ============================================
@@ -187,7 +229,7 @@ function validateForm() {
     return true;
 }
 
-// Procesar pedido (genera mensaje detallado)
+// Procesar pedido (genera mensaje detallado CON UBICACIÓN)
 async function processOrder() {
     console.log("📞 Procesando pedido para WhatsApp...");
     
@@ -234,6 +276,13 @@ async function processOrder() {
     mensaje += `👤 *CLIENTE:* ${nombre}\n`;
     mensaje += `📱 *WHATSAPP:* ${telefono}\n`;
     mensaje += `📍 *DIRECCIÓN DE ENTREGA:*\n${direccion}\n`;
+    
+    // AGREGAR UBICACIÓN DE GOOGLE MAPS (NUEVO - NO DUPLICA)
+    const ubicacion = generarUbicacionGoogleMaps();
+    if (ubicacion && ubicacion.texto) {
+        mensaje += `${ubicacion.texto}\n`;
+    }
+    
     mensaje += `${infoEnvio}`;
     
     if (notas) {
@@ -285,8 +334,8 @@ async function processOrder() {
     
     mensaje += `¡Gracias por tu pedido! 🍕`;
     
-    console.log("📝 Mensaje generado (primeras 300 caracteres):");
-    console.log(mensaje.substring(0, 300) + "...");
+    console.log("📝 Mensaje generado CON UBICACIÓN (primeras 400 caracteres):");
+    console.log(mensaje.substring(0, 400) + "...");
     
     // Enviar por WhatsApp
     const telefonoNegocio = '5493541682310';
@@ -344,6 +393,7 @@ window.validateForm = validateForm;
 window.processOrder = processOrder;
 window.getCarritoActual = getCarritoActual;
 window.updateOrderSummary = updateOrderSummary;
+window.generarUbicacionGoogleMaps = generarUbicacionGoogleMaps;
 
 // ============================================
 // AUTO-INICIALIZACIÓN
@@ -355,5 +405,5 @@ if (document.readyState === 'loading') {
     setTimeout(initForm, 100);
 }
 
-console.log("✅ Sistema de pedidos listo");
+console.log("✅ Sistema de pedidos listo CON UBICACIÓN GOOGLE MAPS");
 console.log("📊 Carrito detectado:", getCarritoActual().length, "productos");
