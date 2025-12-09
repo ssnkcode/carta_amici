@@ -104,6 +104,10 @@
                     <span>Envío:</span>
                     <span id="delivery-cost">$300</span>
                 </div>
+                <div class="summary-row" id="discount-row" style="display: none; color: #2ecc71;">
+                    <span>Descuento (Efectivo 10%):</span>
+                    <span id="discount-amount">-$0</span>
+                </div>
                 <div class="summary-row summary-total">
                     <span>Total:</span>
                     <span id="total-cost">$300</span>
@@ -162,6 +166,33 @@
                             <i class="fas fa-home"></i> Barrio *
                         </label>
                         <input type="text" id="customer-neighborhood" class="address-input" placeholder="Nombre del barrio" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-wallet"></i> Forma de Pago *
+                    </label>
+                    <div class="payment-options">
+                        <label class="payment-option">
+                            <input type="radio" name="payment-method" value="efectivo" required>
+                            <span class="payment-content">
+                                <span class="payment-name"><i class="fas fa-money-bill-wave"></i> Efectivo</span>
+                                <span class="payment-badge">10% OFF</span>
+                            </span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment-method" value="tarjeta">
+                            <span class="payment-content">
+                                <span class="payment-name"><i class="fas fa-credit-card"></i> Tarjeta</span>
+                            </span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment-method" value="transferencia">
+                            <span class="payment-content">
+                                <span class="payment-name"><i class="fas fa-university"></i> Transferencia</span>
+                            </span>
+                        </label>
                     </div>
                 </div>
                 
@@ -278,7 +309,6 @@
     <script src="./src/js/form.js"></script>
     
     <script>
-        // Inicializar cuando el DOM esté cargado
         document.addEventListener('DOMContentLoaded', function() {
             console.log("🚀 Iniciando aplicación completa");
             

@@ -211,7 +211,6 @@ async function processOrder() {
     // Obtener carrito actual
     const carrito = getCarritoActual();
     
-    // Calcular totales
     const subtotal = calculateSubtotal();
     const deliveryElement = document.getElementById('delivery-cost');
     const envio = deliveryElement ? 
