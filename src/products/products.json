@@ -1,0 +1,333 @@
+{
+  "productos": [
+    {
+      "titulo": "Muzza",
+      "descripcion": "Salsa de tomate, muzzarella, aceitunas y orégano.",
+      "precio": 9200,
+      "image": "./src/assets/productos/piza-muzza.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "2 x Muzza",
+      "descripcion": "Dos pizzas grandes de muzzarella clásica.",
+      "precio": 16100,
+      "image": "./src/assets/productos/piza-muzzax2.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Especial",
+      "descripcion": "Salsa de tomate, muzzarella, jamón cocido y morrones.",
+      "precio": 10350,
+      "image": "./src/assets/productos/piza-especial.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Huevo",
+      "descripcion": "Salsa de tomate, muzzarella y huevo duro rallado.",
+      "precio": 10350,
+      "image": "./src/assets/productos/piza-huevo.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Provenzal",
+      "descripcion": "Salsa de tomate, muzzarella, ajo y perejil fresco.",
+      "precio": 10350,
+      "image": "./src/assets/productos/piza-provensal.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Roquefort",
+      "descripcion": "Salsa de tomate, muzzarella y queso roquefort.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-roquefort.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Fugazzeta",
+      "descripcion": "Masa, muzzarella y abundante cebolla.",
+      "precio": 10350,
+      "image": "./src/assets/productos/piza-fuga.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "4 Quesos",
+      "descripcion": "Muzzarella, roquefort, provolone y queso sardo.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-4quesos.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "S/Especial",
+      "descripcion": "Salsa, muzzarella, jamón, morrones y huevo duro.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-S_especial.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Capresse",
+      "descripcion": "Muzzarella, rodajas de tomate natural, ajo y albahaca.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-capresse.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Completa",
+      "descripcion": "Salsa, muzzarella, jamón, morrones, huevo y aceitunas.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-completa.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Calabresa",
+      "descripcion": "Salsa de tomate, muzzarella y rodajas de longaniza calabresa.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-calabresa.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Champiñón",
+      "descripcion": "Salsa de tomate, muzzarella y champiñones fileteados.",
+      "precio": 12650,
+      "image": "./src/assets/productos/piza-champiñon.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Rucula",
+      "descripcion": "Salsa, muzzarella, rúcula fresca y queso parmesano.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-rucula.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Anchoa",
+      "descripcion": "Salsa de tomate y filetes de anchoa.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-anchoa.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Choclo",
+      "descripcion": "Salsa de tomate, muzzarella y granos de choclo amarillo.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-choclo.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Napolitana",
+      "descripcion": "Salsa, muzzarella, rodajas de tomate, ajo y perejil.",
+      "precio": 11500,
+      "image": "./src/assets/productos/piza-napo.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Amici",
+      "descripcion": "Especialidad de la casa con panceta, huevo y muzzarella.",
+      "precio": 13800,
+      "image": "./src/assets/productos/piza-amici.webp",
+      "category": "Pizza"
+    },
+    {
+      "titulo": "Hamburguesa Abusa",
+      "descripcion": "Medallón de carne, Cebolla soasada, Cheddar, Bacon.",
+      "precio": 11500,
+      "image": "./src/assets/productos/hamburguesa-abusa.webp",
+      "category": "Hamburguesa"
+    },
+    {
+      "titulo": "Hamburguesa Clásica",
+      "descripcion": "Medallón de carne, Cebolla morada, Cheddar, Queso Barra.",
+      "precio": 11500,
+      "image": "./src/assets/productos/hamburguesa-clasica.webp",
+      "category": "Hamburguesa"
+    },
+    {
+      "titulo": "Hamburguesa Doble Tóxica",
+      "descripcion": "Dos medallones de carne, Cheddar, Panceta.",
+      "precio": 11500,
+      "image": "./src/assets/productos/hamburguesa-doble-toxica.webp",
+      "category": "Hamburguesa"
+    },
+    {
+      "titulo": "Hamburguesa Zarpada",
+      "descripcion": "Medallón de carne, Lechuga, Tomate, Huevo, Queso Barra.",
+      "precio": 11500,
+      "image": "./src/assets/productos/hamburguesa-zarpada.webp",
+      "category": "Hamburguesa"
+    },
+    {
+      "titulo": "Hamburguesa",
+      "descripcion": "Medallón de carne clásico con lechuga y tomate.",
+      "precio": 11500,
+      "image": "./src/assets/productos/hamburguesa.webp",
+      "category": "Hamburguesa"
+    },
+    {
+      "titulo": "2 x Hamburguesa",
+      "descripcion": "Promo de dos hamburguesas clásicas.",
+      "precio": 20700,
+      "image": "./src/assets/productos/hamburguesa.webp",
+      "category": "Hamburguesa"
+    },
+    {
+      "titulo": "Lomito Completo",
+      "descripcion": "Carne de lomo, jamón, queso, huevo, lechuga, tomate y mayonesa.",
+      "precio": 17250,
+      "image": "./src/assets/productos/lomito-completo.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "Sand. Milanesa Simple",
+      "descripcion": "Milanesa de carne, lechuga, tomate y aderezos.",
+      "precio": 11500,
+      "image": "./src/assets/productos/sand-mila-simp.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "Sand. Milanesa Completa",
+      "descripcion": "Milanesa, jamón, queso, huevo, lechuga y tomate.",
+      "precio": 13800,
+      "image": "./src/assets/productos/sand-mila-comp.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "2 x Sand. Milanesa Completa",
+      "descripcion": "Promo dos sándwiches de milanesa completos.",
+      "precio": 23000,
+      "image": "./src/assets/productos/sand-mila-comp.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "Hamburlomo Simple",
+      "descripcion": "Combinación de carne de hamburguesa y lomo con queso.",
+      "precio": 16100,
+      "image": "./src/assets/productos/hamburlomo-simple.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "Hamburlomo Doble",
+      "descripcion": "Doble carne (hamburguesa y lomo), jamón, queso y huevo.",
+      "precio": 20700,
+      "image": "./src/assets/productos/hamburlomo-doble.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "Lomazo",
+      "descripcion": "Sándwich de lomo gigante en pan especial.",
+      "precio": 11500,
+      "image": "./src/assets/productos/lomazo.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "2 x Lomazo",
+      "descripcion": "Promo dos sándwiches de lomo gigantes.",
+      "precio": 20700,
+      "image": "./src/assets/productos/lomazo.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "1/2 Lomopizza",
+      "descripcion": "Mitad pizza rellena con ingredientes de lomito completo.",
+      "precio": 20700,
+      "image": "./src/assets/productos/medio-lomo-pizza.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "Lomopizza",
+      "descripcion": "Pizza entera rellena estilo sándwich de lomo.",
+      "precio": 34500,
+      "image": "./src/assets/productos/lomo-pizza.webp",
+      "category": "Sandwich"
+    },
+    {
+      "titulo": "Saladas",
+      "descripcion": "Empanadas de carne molida, cebolla, huevo y condimentos.",
+      "precio": 12650,
+      "image": "./src/assets/productos/empanadas-saladas.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "Dulces",
+      "descripcion": "Empanadas de carne dulces con pasas de uva.",
+      "precio": 12650,
+      "image": "./src/assets/productos/empanadas-dulces.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "Jamón y Queso",
+      "descripcion": "Empanadas rellenas de jamón cocido y queso muzzarella.",
+      "precio": 13800,
+      "image": "./src/assets/productos/empanadas-jamon-queso.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "P. Cuchillo",
+      "descripcion": "Empanadas de carne cortada a cuchillo, jugosas.",
+      "precio": 13800,
+      "image": "./src/assets/productos/empanadas-p-cuchillo.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "Pollo",
+      "descripcion": "Empanadas de pollo con cebolla y morrón.",
+      "precio": 11500,
+      "image": "./src/assets/productos/empanadas-pollo.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "Árabes",
+      "descripcion": "Empanadas tipo fatay con carne, limón y cebolla.",
+      "precio": 13800,
+      "image": "./src/assets/productos/empanadas-arabes.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "Fritas (Saladas)",
+      "descripcion": "Empanadas de carne fritas, bien crocantes.",
+      "precio": 10350,
+      "image": "./src/assets/productos/empanadas-fritas.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "2 x Fritas (Saladas)",
+      "descripcion": "Promo dos docenas de empanadas fritas.",
+      "precio": 19550,
+      "image": "./src/assets/productos/empanadas-fritasX2.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "1/2 Docena",
+      "descripcion": "Seis empanadas a elección del menú.",
+      "precio": 6900,
+      "image": "./src/assets/productos/media-empanadas.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "Unidad",
+      "descripcion": "Una empanada individual a elección.",
+      "precio": 1380,
+      "image": "./src/assets/productos/empanada-unidad.webp",
+      "category": "Empanadas"
+    },
+    {
+      "titulo": "Papas Sola",
+      "descripcion": "Porción de papas fritas bastón clásicas.",
+      "precio": 5175,
+      "image": "./src/assets/productos/papas-solas.webp",
+      "category": "Papas"
+    },
+    {
+      "titulo": "Papas Cheddar",
+      "descripcion": "Papas fritas bañadas en abundante salsa cheddar.",
+      "precio": 6325,
+      "image": "./src/assets/productos/papas-cheddar.webp",
+      "category": "Papas"
+    },
+    {
+      "titulo": "Papas Cheddar y Bacon",
+      "descripcion": "Papas fritas con salsa cheddar y lluvia de panceta crocante.",
+      "precio": 6900,
+      "image": "./src/assets/productos/papas-cheddar_bacon.webp",
+      "category": "Papas"
+    }
+  ]
+}
