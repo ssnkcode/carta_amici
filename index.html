@@ -3,12 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comidas AMICI - Pedidos por WhatsApp</title>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <!-- Google Fonts -->
+    <title>Comidas AMICI | Delivery en Bialet Massé - Pizzas y Hamburguesas</title>
+    <meta name="description" content="Pedí online en Comidas AMICI. Las mejores pizzas, hamburguesas, lomos y empanadas en Bialet Massé y alrededores. Delivery rápido y pedidos por WhatsApp.">
+    <meta name="keywords" content="comidas amici, delivery, bialet massé, san roque, santa maría de punilla, pizzas, hamburguesas, lomos, empanadas, comida rápida, córdoba">
+    <meta name="author" content="Comidas AMICI">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#FFD700">
+    <link rel="canonical" href="https://tusitio.com/">
+
+    <meta property="og:type" content="restaurant">
+    <meta property="og:title" content="Comidas AMICI - Delivery en Bialet Massé">
+    <meta property="og:description" content="¿Hambre? Pedí las mejores pizzas y hamburguesas de Bialet Massé. ¡Hacé tu pedido por WhatsApp en segundos!">
+    <meta property="og:image" content="./src/assets/logo/og-image.jpg">
+    <meta property="og:url" content="https://tusitio.com/">
+    <meta property="og:site_name" content="Comidas AMICI">
+    <meta property="og:locale" content="es_AR">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      "name": "Comidas AMICI",
+      "image": "https://tusitio.com/src/assets/logo/logo.png",
+      "description": "Comida rápida de calidad, pizzas y hamburguesas con delivery en Bialet Massé.",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Av. Roque Sáenz Peña 47",
+        "addressLocality": "Bialet Massé",
+        "addressRegion": "Córdoba",
+        "postalCode": "X5158",
+        "addressCountry": "AR"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": -31.3427,
+        "longitude": -64.4748
+      },
+      "url": "https://tusitio.com/",
+      "telephone": "+5493541387884",
+      "servesCuisine": ["Pizza", "Hamburguesas", "Comida Rápida", "Empanadas"],
+      "priceRange": "$$",
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+          "opens": "20:00",
+          "closes": "00:00"
+        }
+      ],
+      "menu": "https://tusitio.com/#catalogo"
+    }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://router.project-osrm.org">
+    <link rel="preconnect" href="https://nominatim.openstreetmap.org">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
-    <!-- CSS Propio -->
+    
     <link rel="stylesheet" href="./src/css/styles.css">
     <link rel="stylesheet" href="./src/css/extras.css">
     <link rel="stylesheet" href="./src/css/form.css">
@@ -20,7 +76,7 @@
             <div class="header-content">
                 <div class="logo">
                     <div class="logo-image">
-                        <img src="./src/assets/logo/logo.png" alt="Comidas AMICI Logo">
+                        <img src="./src/assets/logo/logo.png" alt="Comidas AMICI Logo" width="130" height="60">
                     </div>
                     <div class="logo-text">
                         <h1>Comidas AMICI</h1>
@@ -29,7 +85,7 @@
                 </div>
                 
                 <nav class="nav-menu">
-                    <a href="#whatsapp-form" class="whatsapp-button">
+                    <a href="#whatsapp-form" class="whatsapp-button" aria-label="Ir a realizar pedido">
                         <i class="fab fa-whatsapp"></i> <span class="btn-text">Realizar Pedido</span>
                     </a>
                 </nav>
@@ -38,21 +94,22 @@
     </header>
 
     <main class="container">
-        <section class="food-catalog">
+        <section class="food-catalog" id="catalogo">
             <div class="section-title">
                 <h2>Nuestro Catálogo</h2>
             </div>
             
             <div class="category-tabs">
-                <button class="category-tab active" data-category="todos">Todos</button>
-                <button class="category-tab" data-category="pizza">Pizzas</button>
-                <button class="category-tab" data-category="hamburguesa">Hamburguesas</button>
-                <button class="category-tab" data-category="sandwich">Sandwiches</button>
-                <button class="category-tab" data-category="empanadas">Empanadas</button>
-                <button class="category-tab" data-category="papas">Papas</button>
+                <button class="category-tab active" data-category="todos" aria-label="Ver todos los productos">Todos</button>
+                <button class="category-tab" data-category="pizza" aria-label="Ver pizzas">Pizzas</button>
+                <button class="category-tab" data-category="hamburguesa" aria-label="Ver hamburguesas">Hamburguesas</button>
+                <button class="category-tab" data-category="sandwich" aria-label="Ver sandwiches">Sandwiches</button>
+                <button class="category-tab" data-category="empanadas" aria-label="Ver empanadas">Empanadas</button>
+                <button class="category-tab" data-category="papas" aria-label="Ver papas">Papas</button>
             </div>
             
-            <div class="food-grid" id="food-grid"></div>
+            <div class="food-grid" id="food-grid">
+                </div>
         </section>
         
         <aside class="selected-items" id="cart-section">
@@ -93,7 +150,7 @@
                 </div>
             </div>
             
-            <!-- Aquí se insertará automáticamente delivery-details -->
+            <div id="delivery-details" style="display:none;"></div>
             
             <div class="order-summary">
                 <div class="summary-row">
@@ -102,7 +159,7 @@
                 </div>
                 <div class="summary-row">
                     <span>Envío:</span>
-                    <span id="delivery-cost">$300</span>
+                    <span id="delivery-cost">$0</span>
                 </div>
                 <div class="summary-row" id="discount-row" style="display: none; color: #2ecc71;">
                     <span>Descuento (Efectivo 10%):</span>
@@ -110,7 +167,7 @@
                 </div>
                 <div class="summary-row summary-total">
                     <span>Total:</span>
-                    <span id="total-cost">$300</span>
+                    <span id="total-cost">$0</span>
                 </div>
             </div>
         </aside>
@@ -125,14 +182,14 @@
                     <label class="form-label" for="customer-name">
                         <i class="fas fa-user"></i> Nombre completo *
                     </label>
-                    <input type="text" id="customer-name" class="form-input" placeholder="Ingresa tu nombre completo" required>
+                    <input type="text" id="customer-name" class="form-input" placeholder="Ingresa tu nombre completo" required autocomplete="name">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label" for="customer-phone">
                         <i class="fab fa-whatsapp"></i> Número de WhatsApp *
                     </label>
-                    <input type="tel" id="customer-phone" class="form-input" placeholder="Ej: 1122334455 (solo números)" required>
+                    <input type="tel" id="customer-phone" class="form-input" placeholder="Ej: 3541387884 (solo números)" required autocomplete="tel">
                 </div>
                 
                 <h3 class="form-subtitle">
@@ -144,14 +201,14 @@
                         <label class="address-label" for="customer-city">
                             <i class="fas fa-city"></i> Ciudad *
                         </label>
-                        <input type="text" id="customer-city" class="address-input" placeholder="Nombre de la ciudad" required>
+                        <input type="text" id="customer-city" class="address-input" placeholder="Ej: Bialet Massé" required autocomplete="address-level2">
                     </div>
                     
                     <div class="address-group address-full">
                         <label class="address-label" for="customer-street">
                             <i class="fas fa-road"></i> Calle *
                         </label>
-                        <input type="text" id="customer-street" class="address-input" placeholder="Nombre de la calle" required>
+                        <input type="text" id="customer-street" class="address-input" placeholder="Nombre de la calle" required autocomplete="address-line1">
                     </div>
                     
                     <div class="address-group">
@@ -175,7 +232,7 @@
                     </label>
                     <div class="payment-options">
                         <label class="payment-option">
-                            <input type="radio" name="payment-method" value="efectivo" required>
+                            <input type="radio" name="payment-method" value="efectivo" required checked>
                             <span class="payment-content">
                                 <span class="payment-name"><i class="fas fa-money-bill-wave"></i> Efectivo</span>
                                 <span class="payment-badge">10% OFF</span>
@@ -196,8 +253,6 @@
                     </div>
                 </div>
                 
-                <!-- Aquí se insertará automáticamente delivery-time-info -->
-                
                 <div class="form-group">
                     <label class="form-label" for="order-notes">
                         <i class="fas fa-sticky-note"></i> Notas adicionales (opcional)
@@ -212,27 +267,34 @@
                             <i class="fas fa-phone-alt contact-icon"></i>
                             <div class="contact-text">
                                 <strong>Teléfono:</strong>
-                                <span>+54 11 2233-4455</span>
+                                <span><a href="tel:+5493541387884" style="text-decoration: none; color: inherit;">3541-387884</a></span>
                             </div>
                         </div>
                         <div class="contact-item">
                             <i class="fab fa-whatsapp contact-icon"></i>
                             <div class="contact-text">
                                 <strong>WhatsApp:</strong>
-                                <span>+54 11 2233-4455</span>
+                                <span><a href="https://wa.me/5493541387884" target="_blank" style="text-decoration: none; color: inherit;">+54 9 3541 38-7884</a></span>
                             </div>
                         </div>
                         <div class="contact-item">
                             <i class="fas fa-clock contact-icon"></i>
                             <div class="contact-text">
                                 <strong>Horarios:</strong>
-                                <span>Lun-Dom: 12:00 - 00:00</span>
+                                <span>Lun-Dom: 10:00 - 00:00</span>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt contact-icon"></i>
+                            <div class="contact-text">
+                                <strong>Dirección:</strong>
+                                <span>Av. Roque Sáenz Peña 47, Bialet Massé</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <button type="submit" class="submit-btn">
+                <button type="submit" class="submit-btn" aria-label="Enviar pedido por WhatsApp">
                     <i class="fab fa-whatsapp"></i> Enviar pedido por WhatsApp
                 </button>
             </form>
@@ -240,13 +302,13 @@
             <div class="map-container">
                 <div class="map-header">
                     <h3><i class="fas fa-map-marked-alt"></i> Nuestra ubicación</h3>
-                    <span class="map-info">Zona de cobertura de entregas</span>
+                    <span class="map-info">Zona de cobertura</span>
                 </div>
                 <div class="map-frame" id="map-frame">
                     <div class="map-placeholder">
                         <i class="fas fa-map"></i>
                         <h4>Mapa de ubicación</h4>
-                        <p>Cargando información de nuestra ubicación y zona de cobertura...</p>
+                        <p>Cargando información de nuestra ubicación...</p>
                     </div>
                 </div>
             </div>
@@ -258,16 +320,15 @@
             <div class="footer-content">
                 <div class="logo">
                     <div class="logo-image">
-                        <img src="./src/assets/logo/logo.png" alt="Comidas AMICI Logo">
+                        <img src="./src/assets/logo/logo.png" alt="Comidas AMICI Logo" width="60" height="60" loading="lazy">
                     </div>
                     <div class="logo-text">
-                        <h1>Comidas AMICI</h1>
+                        <h2>Comidas AMICI</h2>
                         <div class="tagline">Comida rápida de calidad</div>
                     </div>
                 </div>
                 <div>
                     <p>© 2025 Comidas AMICI. Todos los derechos reservados.</p>
-                    <p>Envíos a domicilio por WhatsApp</p>
                 </div>
             </div>
         </div>
@@ -275,7 +336,7 @@
     
     <div class="notification" id="notification">
         <i class="fas fa-check-circle"></i>
-        <span id="notification-text">Producto añadido al carrito</span>
+        <span id="notification-text">Producto añadido</span>
     </div>
 
     <div class="modal-overlay" id="confirmation-modal">
@@ -292,7 +353,7 @@
         </div>
     </div>
 
-    <button id="floating-cart-btn" class="floating-cart-btn">
+    <button id="floating-cart-btn" class="floating-cart-btn" aria-label="Ver carrito">
         <i class="fas fa-shopping-cart"></i>
         <span class="btn-content">
             <span id="float-count">0</span> items - <span id="float-total">$0</span>
@@ -300,28 +361,21 @@
         <i class="fas fa-chevron-up"></i>
     </button>
 
-    <script src="./src/js/Sistema_Mapas_calculo_envios/map-core.js"></script>
-    <script src="./src/js/Sistema_Mapas_calculo_envios/delivery-calculator.js"></script>
-    <script src="./src/js/Sistema_Mapas_calculo_envios/address-validator.js"></script>
-    <script src="./src/js/Sistema_Mapas_calculo_envios/ui-manager.js"></script>
-    <script src="./src/js/Sistema_Mapas_calculo_envios/whatsapp-integration.js"></script>
-    <script src="./src/js/Sistema_Mapas_calculo_envios/map-styles.js"></script>
-    <script src="./src/js/Sistema_Mapas_calculo_envios/map-init.js"></script>
+    <script src="./src/js/Sistema_Mapas_calculo_envios/map-core.js" defer></script>
+    <script src="./src/js/Sistema_Mapas_calculo_envios/delivery-calculator.js" defer></script>
+    <script src="./src/js/Sistema_Mapas_calculo_envios/address-validator.js" defer></script>
+    <script src="./src/js/Sistema_Mapas_calculo_envios/ui-manager.js" defer></script>
+    <script src="./src/js/Sistema_Mapas_calculo_envios/whatsapp-integration.js" defer></script>
+    <script src="./src/js/Sistema_Mapas_calculo_envios/map-styles.js" defer></script>
+    <script src="./src/js/Sistema_Mapas_calculo_envios/map-init.js" defer></script>
 
-    <!-- SCRIPTS - IMPORTANTE: ORDEN CORRECTO -->
-    <script src="./src/js/main.js"></script>
-    <script src="./src/js/extras.js"></script>
-    <!-- NUEVO: Sistema de mapas y cálculo de rutas -->
-    <!-- <script src="./src/js/map.js"></script> -->
-    <!-- Sistema de formulario (depende de map.js) -->
-    <script src="./src/js/form.js"></script>
+    <script src="./src/js/main.js" defer></script>
+    <script src="./src/js/extras.js" defer></script>
+    <script src="./src/js/form.js" defer></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("🚀 Iniciando aplicación completa");
-            
-            // Los scripts se inicializan automáticamente
-            // main.js, extras.js, map.js y form.js tienen auto-inicialización
+            console.log("🚀 Iniciando aplicación optimizada");
         });
     </script>
 </body>
