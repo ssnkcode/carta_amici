@@ -128,7 +128,7 @@
     },
     {
       "titulo": "Hamburguesa Abusa",
-      "descripcion": "Medallón de carne, Cebolla soasada, Cheddar, Bacon.",
+      "descripcion": "Medallón de carne, Cebolla asada, Cheddar, Bacon.",
       "precio": 11500,
       "image": "./src/assets/productos/hamburguesa-abusa.webp",
       "category": "Hamburguesa"
